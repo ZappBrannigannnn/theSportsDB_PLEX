@@ -56,9 +56,9 @@ def get_league_id(league_name, SPORTSDB_API):
 
 # endregion
 
-# region GET EVENT ID
+# region GET EVENT ID helpers
 
-# region (1) Get DATE from filename
+# region (-1-) Get DATE from filename
 
 def get_date_from_filename(filename):
 	# Match common date formats
@@ -105,15 +105,23 @@ def get_date_from_filename(filename):
 		match = re.search(pattern, filename)
 		if match:
 			date_str = match.group(1)
+			LogMessage("🔍 Found potential date: {} in filename: {}".format(date_str, filename))
 			try:
 				parsed_date = parser.parse(date_str, dayfirst=False)
-				return parsed_date.strftime("%Y-%m-%d")
+				LogMessage("✅ Parsed date: {}".format(parsed_date.strftime('%Y-%m-%d')))
+				return parsed_date.strftime("%Y-%m-%d")  # ✅ Return only if parsing succeeds
 			except ValueError:
-				continue
+				LogMessage("⚠️ Failed to parse: {}".format(date_str))
+				continue  # ✅ Keep checking the next regex pattern
+
+	return None  # ✅ If no valid date was found, return None
+
+
+
 
 # endregion
 
-# region (2) Get ROUND from filename
+# region (-2-) Get ROUND from filename
 
 def extract_round_from_filename(filename):
 	patterns = [
@@ -174,35 +182,7 @@ def extract_round_from_filename(filename):
 
 	# endregion
 
-# region (3) Get LEAGUE's events in ROUND
-
-def get_events_in_round(league_id, season_name, round_number, SPORTSDB_API):
-	# if the saeson number is 8 characters (########) split with hyphen (####-####)
-	if len(str(season_name)) == 8:
-		season_name = season_name[:4] + "-" + season_name[4:]
-
-	events_in_round_url = "{}/eventsround.php?id={}&r={}&s={}".format(SPORTSDB_API, league_id, round_number, season_name)
-
-	try:
-		response = requests.get(events_in_round_url, verify=certifi.where(), timeout=10)
-		response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
-		event_date_round_data = response.json()
-
-		if "events" in event_date_round_data and event_date_round_data["events"]:
-			#LogMessage("✅ Retrieved ROUND {} events For: {} season: {}".format(round_number, league_id, season_name))
-			return event_date_round_data["events"]
-
-		else:
-			LogMessage("\n❌ No events found for round: {}".format(round_number))
-			return None
-
-	except urllib2.URLError as e:
-		LogMessage("\n⚠ API Request Error: {}".format(e))
-		return None
-
-# endregion
-
-# region (3) Get LEAGUE's events on DATE
+# region (-3A- and -5-) Get LEAGUE's events on DATE
 
 def get_events_on_date(formatted_date, league_id, SPORTSDB_API):
 	events_on_date_url = "{}/eventsday.php?d={}&l={}".format(SPORTSDB_API, formatted_date, league_id)
@@ -210,11 +190,11 @@ def get_events_on_date(formatted_date, league_id, SPORTSDB_API):
 	try:
 		response = requests.get(events_on_date_url, verify=certifi.where(), timeout=10)
 		response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
-		event_date_round_data = response.json()
+		event_date_data = response.json()
 
-		if "events" in event_date_round_data and event_date_round_data["events"]:
+		if "events" in event_date_data and event_date_data["events"]:
 			#LogMessage("✅ Retrieved {} events for: {}".format(formatted_date, league_id))
-			return event_date_round_data["events"]  # Uses 'event_date_round_data' instead of 'data'
+			return event_date_data["events"]  # Uses 'event_date_data' instead of 'data'
 
 		else:
 			LogMessage("\n❌ No events found for date: {}".format(formatted_date))
@@ -226,7 +206,35 @@ def get_events_on_date(formatted_date, league_id, SPORTSDB_API):
 
 # endregion
 
-# region (4) FIND MATCHING EVENT
+# region (-3B-) Get LEAGUE's events in ROUND
+
+def get_events_in_round(league_id, season_name, round_number, SPORTSDB_API):
+	# if the saeson number is 8 characters (########) split with hyphen (####-####)
+	if len(str(season_name)) == 8:
+		season_name = season_name[:4] + "-" + season_name[4:]
+
+	events_in_round_url = "{}/eventsround.php?id={}&r={}&s={}".format(SPORTSDB_API, league_id, round_number, season_name)
+
+	try:
+		response = requests.get(events_in_round_url, verify=certifi.where(), timeout=10)
+		response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
+		event_round_data = response.json()
+
+		if "events" in event_round_data and event_round_data["events"]:
+			#LogMessage("✅ Retrieved ROUND {} events For: {} season: {}".format(round_number, league_id, season_name))
+			return event_round_data["events"]
+
+		else:
+			LogMessage("\n❌ No events found for round: {}".format(round_number))
+			return None
+
+	except urllib2.URLError as e:
+		LogMessage("\n⚠ API Request Error: {}".format(e))
+		return None
+
+# endregion
+
+# region (-4-) Get MATCHING EVENT
 
 # region (4.1) clean_text HELPER FUNCTION
 
@@ -336,7 +344,7 @@ def find_matching_event(filename, event_date_round_data):
 			extra_words = len(event_words) - len(common_words)
 			best_matches.append({"event": event, "extra_words": extra_words})  # Add to best_matches if tied
 
-	# Handle ties
+	# Apply tiebreaker if needed
 	if len(best_matches) > 1:
 		LogMessage("📢 Multiple events with the same match score. Applying tiebreaker...")
 		# Select the event with the fewest extra words
@@ -353,69 +361,140 @@ def find_matching_event(filename, event_date_round_data):
 		LogMessage("✅ With event {}".format(event_title))
 		LogMessage("✅ Event_id: {}".format(event_id))
 		LogMessage("✅ Match score: {}".format(best_score))
+
 		return event_id, event_title, event_date
-	else:
-		LogMessage("❌ No match found (unexpected case)")
-		return None
+
+	LogMessage("❌ No match found for filename: {}".format(filename))
+	return None, None, None  # ✅ Returns a consistent tuple when no match is found
 
 # endregion
 
 # endregion
 
-# GET_EVENT_ID function
+# region (-6-) Get EVENT ORDER NUMBER
 
-# region (1) Get DATE from filename
+def get_event_order_number(event_date_data, event_id):
+    # Sort events by 'strTimestamp' in ascending order
+    sorted_events = sorted(event_date_data, key=lambda x: x.get("strTimestamp", ""), reverse=False)
+
+    # Find the position of the event_id after sorting
+    for index, event in enumerate(sorted_events, start=1):  # 1-based index
+        if str(event.get("idEvent")) == str(event_id):  # Ensure string comparison
+            return index  # Return the order number
+
+    return None  # If not found, return None
+
+# endregion
+
+
+# region GET_EVENT_ID function
 
 def get_event_id(league_id, season_name, filename, SPORTSDB_API):
-	# Initialize event_id
+	LogMessage("🔍 Getting event ID from API for: {}".format(filename))
+	# Initialize event_id and event data placeholders
 	event_id = None
-	
+	event_date_data = None
+	event_round_data = None
+
+	# region (^1^) Get DATE from filename
 	formatted_date = get_date_from_filename(filename)
-	if formatted_date:
+
+	if formatted_date is not None:
 		LogMessage("🗨️ EPISODE: {}".format(filename))
 		LogMessage("🗨️ DATE: {}".format(formatted_date))
-	
-	# endregion
-	
-# region (2) Get ROUND if no DATE in filename
+		# endregion
 
-	if formatted_date is None:
+		# region (^3^) Fetch events for the given date
+		event_date_data = get_events_on_date(formatted_date, league_id, SPORTSDB_API)
+		# endregion
+
+	# region (^2^) Get ROUND from filename if no DATE is found
+	else:
+		LogMessage("⚠️ FORMATTED DATE IS NONE FOR: {}".format(filename))
 		round_number = extract_round_from_filename(filename)
 		LogMessage("🗨️ EPISODE: {}".format(filename))
 		LogMessage("🗨️ ROUND: {}".format(round_number))
 
+		# If no date or round is found, return None
 		if round_number is None:
 			LogMessage("⚠️ No date or round found in filename: {}".format(filename))
 			return None
-
 			# endregion
-	
-		
 
-# region (3) Get EVENTS in ROUND or DATE
+		# region (^3^) Fetch events for the given round number
+		event_round_data = get_events_in_round(league_id, season_name, round_number, SPORTSDB_API)
 
-		else:
-			event_date_round_data = get_events_in_round(league_id, season_name, round_number, SPORTSDB_API)
-	else:
-		event_date_round_data = get_events_on_date(formatted_date, league_id, SPORTSDB_API)
-	
-	# If no event data
-	if event_date_round_data is None:
-		LogMessage("\n❌ No events found for date: {}".format(formatted_date))
+	# If no event data is found from either date or round
+	if not event_date_data and not event_round_data:
+		LogMessage("❌ No events found for date: {} or round: {}".format(
+			formatted_date if formatted_date else "N/A", 
+			round_number if round_number else "N/A"
+		))
 		return None
-
 		# endregion
 
-# region (4) Get matching event by matching the filename against the event_date_round_data
+	# region (^4^) Get matching event by matching the filename against event data
 
-	event_id, event_title, event_date = find_matching_event(filename, event_date_round_data)
+	# Assign the available event data to a common variable
+	event_date_round_data = event_date_data or event_round_data
+
+	# Ensure there's event data before calling find_matching_event
+	if not event_date_round_data:
+		LogMessage("❌ No event data available for matching: {}".format(filename))
+		return None  # Prevents calling `find_matching_event` with None
+
+	event_match = find_matching_event(filename, event_date_round_data)
+
+	if event_match is None:
+		LogMessage("❌ No matching events found for filename: {}".format(filename))
+		return None
+
+	event_id, event_title, event_date = event_match
 
 	if event_id is None:
 		LogMessage("❌ No matching events found for filename: {}".format(filename))
 		return None
-	else:
-		return event_id, event_title, event_date
 
 	# endregion
+
+	# region (^5^) Get total number of events on date
+
+	if not event_date_data:
+		# If no event date from api for the matched event then stop (it was matched by round)
+		if event_date is None:
+			LogMessage("❌ Cannot fetch events because event_date is None. Meaning we didn't get a matched event.")
+			return None  # Prevents calling API with None
+
+		# Change this to formatted_date variable for use with the old function.
+		formatted_date = event_date
+		# Use the same get_events_on_date function.
+		event_date_data = get_events_on_date(formatted_date, league_id, SPORTSDB_API)
+
+		if event_date_data:
+			total_events_on_date = len(event_date_data)
+			LogMessage("✅ Total events on date(A): {}".format(total_events_on_date))
+		else:
+			LogMessage("❌ No events found for date: {} (League: {})".format(event_date, league_id))
+			return None
+
+	else:
+		# If event_date_data exists (from having it in the filename in the first place)
+		total_events_on_date = len(event_date_data)
+		LogMessage("✅ Total events on date(B): {}".format(total_events_on_date))
+
+	# endregion
+
+	# region (^6^) Get event order number
+
+	order_number = get_event_order_number(event_date_data, event_id)
+
+	if order_number:
+		LogMessage("✅ Found event_id {} at order_number: {} (sorted by time)".format(event_id, order_number))
+	else:
+		LogMessage("❌ event_id {} not found in event_date_data".format(event_id))
+
+		# endregion
+		
+	return event_id, event_title, event_date, order_number
 
 # endregion
