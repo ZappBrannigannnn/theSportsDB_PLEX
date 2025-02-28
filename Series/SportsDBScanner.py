@@ -52,11 +52,11 @@ SPORTSDB_API = "{}{}".format(API_BASE_URL, API_KEY)
 
 # region SCAN FUNCTION
 
+# region scan function start
 def Scan(path, files, mediaList, subdirs, language=None, root=None):
 	global SPORTSDB_API
 	LogMessage("")
 	LogMessage("►► STARTING SCAN")
-
 # endregion
 
 	# region GET LEAGUE AND SEASON NAMES FROM FOLDERS
@@ -149,30 +149,39 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 
 	# region GET EVENT ID
 
-	# Iterate through files
+	# region Iterate through files
 	for file in files:
 		filename = os.path.basename(file)  # Extracts the actual file name, e.g., "episodeXYZ123.mp4"
-
-		
-		# Get the event ID from the API_CLIENT
-		LogMessage("\nProcessing: {}\nSeason: {}\nFilename: {}\nWith URL: {}".format(league_id, season_name, filename, SPORTSDB_API))
-		event_id, event_title, event_date, order_number = get_event_id(league_id, season_name, filename, SPORTSDB_API)
-
 		# endregion
 
-		# region UPDATE	mediaList
+		# region Get the event ID from the API_CLIENT
+		LogMessage("\nProcessing: {}\nSeason: {}\nFilename: {}".format(league_id, season_name, filename))
+		event_id, event_title, event_date, order_number = get_event_id(league_id, season_name, filename, SPORTSDB_API)
+		# endregion
 
-		season_number = season_name.replace("-", "")  # replace the "-" with ""
-		event_year = event_date.split("-")[0]
-		event_date = event_date.replace("-", "")
+		# region Process the event info before inserting.
+		if event_id is None:
+			event_id = "No event ID found"
 
-		# If order_number is over 2 digits, then remove all but the last 2 (plex only allows 10 digit episode numbers)
-		if len(str(order_number)) > 2:
-			order_number = int(str(order_number)[-2:])
+		if event_title is None:
+			event_title = filename.split(".")[0]	# filename minus extension
 
-		# Add order_number to event_date with a buffer of 2 digits
-		event_date = event_date + str(order_number).zfill(2)
+		if event_date is None:
+			# Number based on timestamp
+			event_date =  int(time.time()) % 10000000000	# Last 10 digits of timestamp
+			event_year = season_name[:4]	# event_year is first 4 digits of season_number
+		else:
+			event_year = event_date.split("-")[0]	# get the first portion of the date before "-"
+			event_date = event_date.replace("-", "") 	# remove the "-"
+			event_date = str(event_date) + str(order_number).zfill(2)	# Add order_number to event_date with a buffer of 2 digits
+
+		if order_number is None:
+			order_number = "00"		# Default to 00
+		else:
+			order_number = str(order_number)[-2:]  # Keep only last 2 digits
 		
+		season_number = season_name.replace("-", "")  # remove the "-"
+
 		LogMessage("►► LEAGUE / SHOW NAME: {}".format(league_name))
 		LogMessage("►► LEAGUE ID {}".format(league_id))
 		LogMessage("►► SEASON: {}".format(season_number))
@@ -181,7 +190,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 		LogMessage("►► EVENT DATE: {}".format(event_date))
 		LogMessage("►► EVENT YEAR: {}".format(event_year))
 
-		# Create Media.Episode object for Plex
+		# endregion
+
+		# region Create Media.Episode object for Plex
 		media = Media.Episode(
 			league_name.encode("utf-8"),     # Show Name / League Name
 			season_number.encode("utf-8"),   # Season Number

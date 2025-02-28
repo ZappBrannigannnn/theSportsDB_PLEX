@@ -105,13 +105,10 @@ def get_date_from_filename(filename):
 		match = re.search(pattern, filename)
 		if match:
 			date_str = match.group(1)
-			LogMessage("🔍 Found potential date: {} in filename: {}".format(date_str, filename))
 			try:
 				parsed_date = parser.parse(date_str, dayfirst=False)
-				LogMessage("✅ Parsed date: {}".format(parsed_date.strftime('%Y-%m-%d')))
 				return parsed_date.strftime("%Y-%m-%d")  # ✅ Return only if parsing succeeds
 			except ValueError:
-				LogMessage("⚠️ Failed to parse: {}".format(date_str))
 				continue  # ✅ Keep checking the next regex pattern
 
 	return None  # ✅ If no valid date was found, return None
@@ -171,14 +168,25 @@ def extract_round_from_filename(filename):
 		r"GW_(\d+)",  			# GW_4
 		r"GW\.(\d+)", 			# GW.4
 		r"GW(\d+)",   			# GW4
+
 	]    
 	
-	for pattern in patterns:
-		match = re.search(pattern, filename, re.IGNORECASE)
-		if match:
-			return int(match.group(1))  # ✅ Correctly returns the first valid match
+	compiled_patterns = [re.compile(p, re.IGNORECASE) for p in patterns]
 
-	return None  # ✅ Returns None if no pattern matches
+	# Check for numeric patterns first
+	for pattern in compiled_patterns:
+		match = pattern.search(filename)
+		if match:
+			try:
+				return int(match.group(1))  # ✅ Convert to int safely
+			except (IndexError, ValueError):
+				continue  # ✅ Skip any incorrect matches
+
+	# Case-insensitive check for "State of Origin"
+	if re.search(r"state of origin", filename, re.IGNORECASE):
+		return "00"  # ✅ Return round 00 as string
+
+	return None  # ✅ Returns None if no match is found
 
 	# endregion
 
@@ -225,12 +233,12 @@ def get_events_in_round(league_id, season_name, round_number, SPORTSDB_API):
 			return event_round_data["events"]
 
 		else:
-			LogMessage("\n❌ No events found for round: {}".format(round_number))
-			return None
+			LogMessage("❌ No events found for round: {}".format(round_number))
+			return []
 
-	except urllib2.URLError as e:
-		LogMessage("\n⚠ API Request Error: {}".format(e))
-		return None
+	except requests.exceptions.RequestException as e:
+		LogMessage("❌ API Request Error: {}".format(e))
+		return []
 
 # endregion
 
@@ -374,33 +382,33 @@ def find_matching_event(filename, event_date_round_data):
 # region (-6-) Get EVENT ORDER NUMBER
 
 def get_event_order_number(event_date_data, event_id):
-    # Sort events by 'strTimestamp' in ascending order
-    sorted_events = sorted(event_date_data, key=lambda x: x.get("strTimestamp", ""), reverse=False)
+	# Sort events by 'strTimestamp' in ascending order
+	sorted_events = sorted(event_date_data, key=lambda x: x.get("strTimestamp", ""), reverse=False)
 
-    # Find the position of the event_id after sorting
-    for index, event in enumerate(sorted_events, start=1):  # 1-based index
-        if str(event.get("idEvent")) == str(event_id):  # Ensure string comparison
-            return index  # Return the order number
+	# Find the position of the event_id after sorting
+	for index, event in enumerate(sorted_events, start=1):  # 1-based index
+		if str(event.get("idEvent")) == str(event_id):  # Ensure string comparison
+			return index  # Return the order number
 
-    return None  # If not found, return None
+	return None  # If not found, return None
 
 # endregion
 
-
 # region GET_EVENT_ID function
 
+# region get_event_id initialize
 def get_event_id(league_id, season_name, filename, SPORTSDB_API):
 	LogMessage("🔍 Getting event ID from API for: {}".format(filename))
 	# Initialize event_id and event data placeholders
 	event_id = None
 	event_date_data = None
 	event_round_data = None
+	# endregion
 
 	# region (^1^) Get DATE from filename
 	formatted_date = get_date_from_filename(filename)
 
 	if formatted_date is not None:
-		LogMessage("🗨️ EPISODE: {}".format(filename))
 		LogMessage("🗨️ DATE: {}".format(formatted_date))
 		# endregion
 
@@ -410,27 +418,27 @@ def get_event_id(league_id, season_name, filename, SPORTSDB_API):
 
 	# region (^2^) Get ROUND from filename if no DATE is found
 	else:
-		LogMessage("⚠️ FORMATTED DATE IS NONE FOR: {}".format(filename))
+		LogMessage("⚠️ No date for: {}. Trying to get round.".format(filename))
 		round_number = extract_round_from_filename(filename)
-		LogMessage("🗨️ EPISODE: {}".format(filename))
 		LogMessage("🗨️ ROUND: {}".format(round_number))
 
 		# If no date or round is found, return None
 		if round_number is None:
 			LogMessage("⚠️ No date or round found in filename: {}".format(filename))
-			return None
+			return None, None, None, None
 			# endregion
 
 		# region (^3^) Fetch events for the given round number
 		event_round_data = get_events_in_round(league_id, season_name, round_number, SPORTSDB_API)
+		# endregion
 
-	# If no event data is found from either date or round
-	if not event_date_data and not event_round_data:
-		LogMessage("❌ No events found for date: {} or round: {}".format(
+	# region If no events are found for either date or round, log & mark file as "skipped"
+	if not event_date_data and (event_round_data is None or event_round_data == []):
+		LogMessage("❌ No events found for date: {} or round: {}. Skipping event matching.".format(
 			formatted_date if formatted_date else "N/A", 
 			round_number if round_number else "N/A"
 		))
-		return None
+		return None, None, None, None  # ✅ Ensures the script moves to the next file without retrying
 		# endregion
 
 	# region (^4^) Get matching event by matching the filename against event data
