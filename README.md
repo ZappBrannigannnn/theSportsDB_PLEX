@@ -1,9 +1,6 @@
-#####################################################################################################################################
-#                                                                                                                                   #
-#                                               THE PLEX SPORTSDB SCANNER AND AGENT                                                 #
-#                                                       BY ZAPP_BRANNIGAN                                                           #
-#                                                                                                                                   #
-#####################################################################################################################################
+
+# THE PLEX SPORTSDB SCANNER AND AGENT      
+# BY ZAPP_BRANNIGAN                                                      
 
 1. The Scanner and Agent are intended for use together
 2. In the SCANNERS/SERIES folder, enter your API KEY in the YourSportsDB_API_KEY.json file
