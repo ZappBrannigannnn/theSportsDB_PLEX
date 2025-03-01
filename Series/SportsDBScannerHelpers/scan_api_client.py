@@ -3,10 +3,13 @@
 # region IMPORTS
 
 import re
+import os
+import sys
 import certifi
 import requests
 from logging_config import LogMessage
 from dateutil import parser
+import json
 
 # endregion
 
@@ -107,11 +110,11 @@ def get_date_from_filename(filename):
 			date_str = match.group(1)
 			try:
 				parsed_date = parser.parse(date_str, dayfirst=False)
-				return parsed_date.strftime("%Y-%m-%d")  # ✅ Return only if parsing succeeds
+				return parsed_date.strftime("%Y-%m-%d")  # Return only if parsing succeeds
 			except ValueError:
-				continue  # ✅ Keep checking the next regex pattern
+				continue  # Keep checking the next regex pattern
 
-	return None  # ✅ If no valid date was found, return None
+	return None  # If no valid date was found, return None
 
 
 
@@ -121,6 +124,8 @@ def get_date_from_filename(filename):
 # region (-2-) Get ROUND from filename
 
 def extract_round_from_filename(filename):
+	# Extracts the round number from a filename, checking standard patterns first and falling back to a YAML file for special cases.
+
 	patterns = [
 		r"Round (\d+)",     	# Round 12
 		r"Round-(\d+)",     	# Round-12
@@ -168,25 +173,47 @@ def extract_round_from_filename(filename):
 		r"GW_(\d+)",  			# GW_4
 		r"GW\.(\d+)", 			# GW.4
 		r"GW(\d+)",   			# GW4
-
 	]    
-	
+
 	compiled_patterns = [re.compile(p, re.IGNORECASE) for p in patterns]
 
-	# Check for numeric patterns first
+	# First, check for numeric round matches (fastest)
 	for pattern in compiled_patterns:
 		match = pattern.search(filename)
 		if match:
 			try:
-				return int(match.group(1))  # ✅ Convert to int safely
+				return int(match.group(1))  # Convert match to integer
 			except (IndexError, ValueError):
-				continue  # ✅ Skip any incorrect matches
+				continue
 
-	# Case-insensitive check for "State of Origin"
-	if re.search(r"state of origin", filename, re.IGNORECASE):
-		return "00"  # ✅ Return round 00 as string
+	LogMessage("►► No numeric round found in filename: {}".format(filename))
 
-	return None  # ✅ Returns None if no match is found
+	# If no numeric round was found, check the special cases from JSON
+	json_filepath = "C:/Users/mjc_c/AppData/Local/Plex Media Server/Scanners/Series/SpecialRoundsMap.json"
+
+	LogMessage("►► Checking for special cases in SpecialRoundsMap.json.")
+
+	try:
+		with open(json_filepath, "r") as file:
+			special_cases = json.load(file)
+
+			if not isinstance(special_cases, dict):
+				return None  # Ensure it's a valid dictionary
+	except Exception as e:
+		LogMessage("►► Error reading JSON file: {}".format(str(e)))
+		return None  # If JSON fails or doesn't exist, return None
+
+	# Normalize filename to lowercase before checking for special cases
+	lower_filename = filename.lower()
+
+	for keyword, round_value in special_cases.items():
+		if re.search(r"\b" + re.escape(keyword) + r"\b", lower_filename, re.IGNORECASE):
+
+			LogMessage("►► Special case found! Keyword: {}, Round: {}".format(keyword, round_value))
+			return round_value
+
+	LogMessage("►► No special cases found in filename: {}".format(filename))
+	return None  # Return None if no match is found
 
 	# endregion
 
@@ -205,11 +232,11 @@ def get_events_on_date(formatted_date, league_id, SPORTSDB_API):
 			return event_date_data["events"]  # Uses 'event_date_data' instead of 'data'
 
 		else:
-			LogMessage("\n❌ No events found for date: {}".format(formatted_date))
+			LogMessage("❌ No events found for date: {}".format(formatted_date))
 			return None
 
 	except urllib2.URLError as e:
-		LogMessage("\n⚠ API Request Error: {}".format(e))
+		LogMessage("⚠ API Request Error: {}".format(e))
 		return None
 
 # endregion
@@ -276,16 +303,26 @@ def remove_stop_phrases(filename_words, stop_phrases): # Remove multi-word stop 
 
 # endregion
 
-def compute_match_score(filename_words, event_words):
+def compute_match_score(filename_words, event_words, league_name):
+
+	# Convert league name into a list of words ( to add to stop phrases)
+	league_name_words = league_name.lower().split()
+
+	# Only create ONE stop phrase for the full league name
+	league_stop_phrase = (tuple(league_name_words),)  # Keep as one unit
 
 	# Combinations of adjecant words or single words to be removed from matching
 	stop_phrases = [
-			("formula", "1"),  # League names with numbers can mess things up.
 			("vs",),           # Single-word stop phrase
 			("and",),       
 			("the",),
-			("fc",)   
+			("fc",)				# Can also be adjacent groups of words. For example: ("formula", "1"),
 		]
+
+	# Add league name stop phrases (league names with numbers can mess up matching)
+	stop_phrases.extend(league_stop_phrase)
+
+	#LogMessage("STOP PHRASES WITH LEAGUE NAME ADDED: {}".format(stop_phrases))
 
 	# Convert sets to lists for ordered processing
 	filename_words = list(filename_words)  # Convert set to list
@@ -319,23 +356,23 @@ def compute_match_score(filename_words, event_words):
 def find_matching_event(filename, event_date_round_data):
 	
 	filename_words = clean_text(filename)
-	LogMessage("📂 Extracted words from filename: {}".format(filename_words))
 
 	# Initialize best_match and best_score
 	best_matches = []  # Store all matches with the best score
 	best_score = 0
 
 	for event in event_date_round_data:
+		league_name = event.get("strLeague") # To add to stop phrases
 		event_name = event.get("strEvent", "")
 		event_id = event.get("idEvent", "Unknown ID")
 		event_text = "{} {} {}".format(event.get("strEvent", ""), event.get("strHomeTeam", ""), event.get("strAwayTeam", ""))
 		event_words = clean_text(event_text)
 
 		# Compute match score (higher = better match)
-		match_score, common_words, filename_words = compute_match_score(filename_words, event_words)
+		match_score, common_words, filename_words = compute_match_score(filename_words, event_words, league_name)
 
 		# NEVER DELETE THESE LOGS (JUST COMMENT THEM OUT!!!!)
-		LogMessage("\nEvent ID: {}".format(event_id))
+		LogMessage("Event ID: {}".format(event_id))
 		LogMessage("Filename words: {}".format(filename_words))
 		LogMessage("🆚 Event words: {}".format(event_words))
 		LogMessage("  Common words: {}".format(common_words))
@@ -373,7 +410,7 @@ def find_matching_event(filename, event_date_round_data):
 		return event_id, event_title, event_date
 
 	LogMessage("❌ No match found for filename: {}".format(filename))
-	return None, None, None  # ✅ Returns a consistent tuple when no match is found
+	return None, None, None  # Returns a consistent tuple when no match is found
 
 # endregion
 
@@ -418,9 +455,10 @@ def get_event_id(league_id, season_name, filename, SPORTSDB_API):
 
 	# region (^2^) Get ROUND from filename if no DATE is found
 	else:
-		LogMessage("⚠️ No date for: {}. Trying to get round.".format(filename))
+		LogMessage("⚠️ No date for: {}".format(filename))
+		LogMessage("🗨️ Trying to get round.")
 		round_number = extract_round_from_filename(filename)
-		LogMessage("🗨️ ROUND: {}".format(round_number))
+		LogMessage("✅ Retrieved ROUND {}\n".format(round_number))
 
 		# If no date or round is found, return None
 		if round_number is None:
@@ -438,7 +476,7 @@ def get_event_id(league_id, season_name, filename, SPORTSDB_API):
 			formatted_date if formatted_date else "N/A", 
 			round_number if round_number else "N/A"
 		))
-		return None, None, None, None  # ✅ Ensures the script moves to the next file without retrying
+		return None, None, None, None  # Ensures the script moves to the next file without retrying
 		# endregion
 
 	# region (^4^) Get matching event by matching the filename against event data
@@ -480,7 +518,7 @@ def get_event_id(league_id, season_name, filename, SPORTSDB_API):
 
 		if event_date_data:
 			total_events_on_date = len(event_date_data)
-			LogMessage("✅ Total events on date(A): {}".format(total_events_on_date))
+			#LogMessage("✅ (i) Total events on date: {}".format(total_events_on_date))
 		else:
 			LogMessage("❌ No events found for date: {} (League: {})".format(event_date, league_id))
 			return None
@@ -488,7 +526,7 @@ def get_event_id(league_id, season_name, filename, SPORTSDB_API):
 	else:
 		# If event_date_data exists (from having it in the filename in the first place)
 		total_events_on_date = len(event_date_data)
-		LogMessage("✅ Total events on date(B): {}".format(total_events_on_date))
+		#LogMessage("✅ (ii) Total events on date: {}".format(total_events_on_date))
 
 	# endregion
 
@@ -497,7 +535,7 @@ def get_event_id(league_id, season_name, filename, SPORTSDB_API):
 	order_number = get_event_order_number(event_date_data, event_id)
 
 	if order_number:
-		LogMessage("✅ Found event_id {} at order_number: {} (sorted by time)".format(event_id, order_number))
+		LogMessage("✅ Found event_id {} at order_number: {} (sorted by timestamp)\n".format(event_id, order_number))
 	else:
 		LogMessage("❌ event_id {} not found in event_date_data".format(event_id))
 

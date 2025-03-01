@@ -26,12 +26,12 @@ SPORTSDB_API = ""
 
 def LogMessage(dbgline):
 	# Wrapper function to log messages using Plex's Log object.bool
-	timestamp = time.strftime("\n%H:%M:%S - ")
+	timestamp = time.strftime("%H:%M:%S - ")
 	
 	try:
 		Log.Debug("{}{}".format(timestamp, dbgline))  # Correct Plex logging
 	except NameError:
-		print("\n⚠ Log object is not available. Running in a non-Plex environment.")
+		print("⚠ Log object is not available. Running in a non-Plex environment.")
 
 # endregion
 
@@ -45,10 +45,10 @@ def APIKEY_get():
 
 	API_KEY = Prefs['theSportsDBAPIKey']
 	if not API_KEY:
-		LogMessage("\n❌ No theSportsDB API key provided.")
+		LogMessage("❌ No theSportsDB API key provided.")
 		return None  # Stop if no key
 
-	LogMessage("\n✅ Got API key from settings.")
+	LogMessage("✅ Got API key from settings.")
 
 	# Construct the API URL
 	SPORTSDB_API = str("{}{}".format(API_BASE_URL, API_KEY))
@@ -59,7 +59,7 @@ def APIKEY_get():
 
 def Start():
 	# Required function for Plex plugins to initialize the agent.
-	LogMessage("\n🔥 START FUNCTION TRIGGERED.")
+	LogMessage("🔥 START FUNCTION TRIGGERED.")
 
 	APIKEY_get()  # Call APIKEY_get function\
 
@@ -80,7 +80,8 @@ class SportsDBAgent(Agent.TV_Shows):
 	# region SEARCH FUNCTION / SERIES / SHOW / LEAGUE LEVEL STUFF  ######################################
 
 	def search(self, results, media, lang, manual, **kwargs):
-		LogMessage("\n🔥 SEARCH FUNCTION TRIGGERED")
+		LogMessage("\n\n")
+		LogMessage("🔥 SEARCH FUNCTION TRIGGERED")
 
 		# region STEP 1: Fetch the league ID from the JSON file
 
@@ -97,7 +98,7 @@ class SportsDBAgent(Agent.TV_Shows):
 		# Define the path to the JSON file
 		league_map_path = os.path.join(plex_plugin_data_dir, "SportsDB_League_Map.json")
 
-		LogMessage("\nLeague map path: {}".format(league_map_path))
+		LogMessage("League map path: {}".format(league_map_path))
 		
 		# endregion
 
@@ -107,7 +108,7 @@ class SportsDBAgent(Agent.TV_Shows):
 				league_data = json.load(f)
 				leagues = league_data.get("leagues", [])
 		except Exception as e:
-			LogMessage("\n❌ Error reading JSON file: {}".format(str(e)))
+			LogMessage("❌ Error reading JSON file: {}".format(str(e)))
 			leagues = []
 		# endregion
 
@@ -123,13 +124,13 @@ class SportsDBAgent(Agent.TV_Shows):
 				if league["name"] == show_title:
 					league_id = league["id"]
 					# Log the league ID pulled from json file matching
-					#LogMessage("\n✅ League '{}' ID: {} found in the JSON file.".format(show_title, league_id))
+					#LogMessage("✅ League '{}' ID: {} found in the JSON file.".format(show_title, league_id))
 					break
 			else:
-				LogMessage("\n❌ League '{}' not found in the JSON file.".format(show_title))
+				LogMessage("❌ League '{}' not found in the JSON file.".format(show_title))
 				return
 		else:
-			LogMessage("\n❌ Show title is missing. Skipping league ID lookup.")
+			LogMessage("❌ Show title is missing. Skipping league ID lookup.")
 			return
 
 		# endregion
@@ -143,7 +144,8 @@ class SportsDBAgent(Agent.TV_Shows):
 		league_metadata = get_league_info(league_id, SPORTSDB_API)
 
 		if league_metadata == None:
-			LogMessage("\n❌ No metadata found for league ID (1): {}\nSTOPPING".format(league_id))
+			LogMessage("❌ No metadata found for league ID (1): {}".format(league_id))
+			LogMessage("STOPPING")
 			return  # Stop execution early if no metadata from API 
 
 		# endregion
@@ -202,7 +204,7 @@ class SportsDBAgent(Agent.TV_Shows):
 
 		fanart_url = league_metadata.get("strFanart1")
 		if fanart_url:
-			LogMessage("\n✅ Retrieved fanart / background images for league: {}".format(league_id))
+			LogMessage("✅ Retrieved fanart / background images for league: {}".format(league_id))
 			metadata.art[fanart_url] = Proxy.Preview(HTTP.Request(fanart_url, sleep=0.5).content, sort_order=1)
 
 	# endregion
@@ -213,7 +215,7 @@ class SportsDBAgent(Agent.TV_Shows):
 		team_images = get_team_images(league_id, SPORTSDB_API)  # This is a LIST
 
 		if not team_images:
-			LogMessage("\n❌ No team images found for League ID: {}.\nStopping.".format(league_id))
+			LogMessage("❌ No team images found for League ID: {}.Stopping.".format(league_id))
 			return  
 
 		metadata.roles.clear()  # Clear existing roles if needed
@@ -240,27 +242,27 @@ class SportsDBAgent(Agent.TV_Shows):
 	# region
 	def season_stuff(self, metadata, media, league_id):
 		# Ensure seasons have posters and artwork by fetching from TheSportsDB if missing.        
-		LogMessage("\n🔍 Checking SEASON metadata for show: {}".format(metadata.title))
+		LogMessage("🔍 Checking SEASON metadata for show: {}".format(metadata.title))
 
 		for season_id in media.seasons:
-			LogMessage("\n📅 Processing Season: {}".format(season_id))
+			LogMessage("📅 Processing Season: {}".format(season_id))
 
 			# Create season metadata if it doesn't exist albeit empty (initialize)
 			if season_id not in metadata.seasons:
-				LogMessage("\n⚠️ Season {} does not exist in metadata.".format(season_id))
+				LogMessage("⚠️ Season {} does not exist in metadata.".format(season_id))
 				metadata.seasons[season_id] = Metadata.Season()
 			else:
-				LogMessage("\n✅ Season {} already exists in metadata.".format(season_id))
+				LogMessage("✅ Season {} already exists in metadata.".format(season_id))
 			
 			# Assign to be used in API search
 			season_metadata = metadata.seasons[season_id]
 
 			# Skip if season already has both poster & artwork
 			if season_metadata.art and season_metadata.posters:
-				LogMessage("\n✅ Season {} already has artwork and posters.".format(season_id))
+				LogMessage("✅ Season {} already has artwork and posters.".format(season_id))
 				continue
 			else:
-				LogMessage("\n⚠️ Season {} does not have both poster and artwork.".format(season_id))
+				LogMessage("⚠️ Season {} does not have both poster and artwork.".format(season_id))
 
 			# Fetch season metadata from TheSportsDB API ###<><><><><><><><><><><><><><><><<<<<<>>>><><<<<<<<><><
 
@@ -270,7 +272,7 @@ class SportsDBAgent(Agent.TV_Shows):
 			season_data = get_season_metadata(league_id, season_id, API_KEY)
 
 			if not season_data:
-				LogMessage("\n⚠️ No metadata found for Season {}!".format(season_id))
+				LogMessage("⚠️ No metadata found for Season {}!".format(season_id))
 				continue
 
 			# Get poster and fanart URLs
@@ -280,14 +282,14 @@ class SportsDBAgent(Agent.TV_Shows):
 			# Download and assign missing poster
 			if not season_metadata.posters and poster_url:
 				season_metadata.posters[poster_url] = Proxy.Preview(HTTP.Request(poster_url, sleep=0.5).content, sort_order=1)
-				LogMessage("\n✅ Added poster for Season {}: {}".format(season_id, poster_url))
+				LogMessage("✅ Added poster for Season {}: {}".format(season_id, poster_url))
 
 			# Download and assign missing artwork
 			if not season_metadata.art and fanart_url:
 				season_metadata.art[fanart_url] = Proxy.Preview(HTTP.Request(fanart_url, sleep=0.5).content, sort_order=1)
-				LogMessage("\n✅ Added artwork for Season {}: {}".format(season_id, fanart_url))
+				LogMessage("✅ Added artwork for Season {}: {}".format(season_id, fanart_url))
 
-		LogMessage("\n🎉 Season metadata update complete!")
+		LogMessage("🎉 Season metadata update complete!")
 
 	# endregion
 	"""
@@ -350,29 +352,29 @@ class SportsDBAgent(Agent.TV_Shows):
 			try:
 				episode.originally_available_at = datetime.datetime.strptime(date, "%Y-%m-%d").date()
 			except ValueError:
-				LogMessage("\n❌ ERROR: Invalid date format: {}".format(date))
+				LogMessage("❌ ERROR: Invalid date format: {}".format(date))
 
 		# Assign images correctly (validate URLs first)
 		if thumb and thumb.startswith("http"):
 			try:
 				episode.thumbs[thumb] = Proxy.Preview(HTTP.Request(thumb, sleep=0.5).content, sort_order=1)
 			except Exception as e:
-				LogMessage("\n❌ ERROR: Failed to assign thumb: {}".format(e))
+				LogMessage("❌ ERROR: Failed to assign thumb: {}".format(e))
 
 		if fanart and fanart.startswith("http"):
 			try:
 				episode.art[fanart] = Proxy.Preview(HTTP.Request(fanart, sleep=0.5).content, sort_order=1)
 			except Exception as e:
-				LogMessage("\n❌ ERROR: Failed to assign fanart: {}".format(e))
+				LogMessage("❌ ERROR: Failed to assign fanart: {}".format(e))
 
-		#LogMessage("\n✅ Successfully updated metadata for: {} - S{}E{}".format(eventtitle, season_number, episode_number))
+		#LogMessage("✅ Successfully updated metadata for: {} - S{}E{}".format(eventtitle, season_number, episode_number))
 
 	# endregion
 
 	# region UPDATE FUNCTION
 
 	def update(self, metadata, media, lang, force):
-		LogMessage("\n🔥 UPDATE FUNCTION TRIGGERED for League ID: {}".format(metadata.id))
+		LogMessage("🔥 UPDATE FUNCTION TRIGGERED for League ID: {}".format(metadata.id))
 
 		# region UPDATE STEPS (1) & (2) FILL IN LEAGUE/SHOW METADATA (fanart & team images)
 
@@ -380,7 +382,7 @@ class SportsDBAgent(Agent.TV_Shows):
 
 		# Check if the league already has an art (fanart/background)
 		if metadata.art:
-			LogMessage("\n🖼️ League ID {} already has art applied: {}".format(
+			LogMessage("🖼️ League ID {} already has art applied: {}".format(
 				league_id, list(metadata.art.keys())[0]))
 		else:
 			# UPDATE STEP (1): Get league metadata
@@ -388,7 +390,7 @@ class SportsDBAgent(Agent.TV_Shows):
 
 		# Check if the league's roles are already populated
 		if metadata.roles:
-			LogMessage("\n👥 League ID {} already has roles applied. First role: {}".format(
+			LogMessage("👥 League ID {} already has roles applied. First role: {}".format(
 				league_id, metadata.roles[0].name if metadata.roles[0] else "Unknown"))
 		else:
 			# UPDATE STEP (2): Get team images
@@ -403,20 +405,6 @@ class SportsDBAgent(Agent.TV_Shows):
 		self.season_stuff(metadata, media, league_id)
 		"""
 
-		""" ### CAN I DELETE THIS????? ###
-		for season_number in media.seasons:
-			LogMessage("\n\nSeasonnnnnnnnnnnnnn: {}".format(season_number))
-			
-			for episode_number in media.seasons[season_number].episodes:
-				episode_media = media.seasons[season_number].episodes[episode_number]
-				
-				for item in episode_media.items:
-					file_path = item.parts[0].file  # Access the file path
-					LogMessage("\nEpisode: {}, File: {}\n\n".format(episode_number, file_path))
-			"""
-		
-
-
 		# region STEP (4) ITERATE THROUGH SEASONS AND EPISODES
 
 		# Iterate through each season
@@ -428,12 +416,13 @@ class SportsDBAgent(Agent.TV_Shows):
 
 				# Ensure episode media exists before accessing file path
 				if not episode_media.items or not episode_media.items[0].parts:
-					LogMessage("\n❌ ERROR: Missing media parts for S{}E{}, skipping.".format(season_number, episode_number))
+					LogMessage("❌ ERROR: Missing media parts for S{}E{}, skipping.".format(season_number, episode_number))
 					continue
 
 				# Extract episode's file path
 				episode_path = episode_media.items[0].parts[0].file
-				LogMessage("\n🎬 Processing Episode: S{}E{} - Path: {}".format(season_number, episode_number, episode_path))
+				LogMessage("\n")
+				LogMessage("🎬 Processing Episode: S{}E{} - Path: {}".format(season_number, episode_number, episode_path))
 
 		# endregion
 
@@ -442,7 +431,7 @@ class SportsDBAgent(Agent.TV_Shows):
 				event_id = self.call_get_event_id(season_number, episode_number, episode_path, league_id)
 
 				if not event_id:
-					LogMessage("\n❌ ERROR: No event ID found for S{}E{}, skipping.".format(season_number, episode_number))
+					LogMessage("❌ ERROR: No event ID found for S{}E{}, skipping.".format(season_number, episode_number))
 					continue  # Skip this episode if no event ID
 
 				# endregion
@@ -452,10 +441,10 @@ class SportsDBAgent(Agent.TV_Shows):
 				event_metadata = self.call_get_event_metadata(event_id)
 
 				if not event_metadata:
-					LogMessage("\n❌ ERROR: No event metadata found for Event ID {}, skipping.".format(event_id))
+					LogMessage("❌ ERROR: No event metadata found for Event ID {}, skipping.".format(event_id))
 					continue  # Skip this episode if no metadata
 				
-				#LogMessage("\n✅ Applying Metadata for S{}E{} - Event: {}".format(season_number, episode_number, event_metadata.get("strEvent", "Unknown Event")))
+				#LogMessage("✅ Applying Metadata for S{}E{} - Event: {}".format(season_number, episode_number, event_metadata.get("strEvent", "Unknown Event")))
 
 				# endregion
 
@@ -465,7 +454,8 @@ class SportsDBAgent(Agent.TV_Shows):
 
 				# endregion
 
-		LogMessage("\n✅ UPDATE FUNCTION COMPLETED SUCCESSFULLY.")
+		LogMessage("\n")
+		LogMessage("✅ UPDATE FUNCTION COMPLETED SUCCESSFULLY.\n")
 
 		# endregion
 

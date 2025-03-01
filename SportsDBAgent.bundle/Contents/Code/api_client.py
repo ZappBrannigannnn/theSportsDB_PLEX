@@ -10,6 +10,7 @@ import codecs
 from dateutil import parser
 from functools import reduce
 from difflib import SequenceMatcher
+import io
 
 # endregion
 
@@ -17,12 +18,12 @@ from difflib import SequenceMatcher
 # region
 
 def LogMessage(dbgline):
-	timestamp = time.strftime("\n%H:%M:%S - ")
+	timestamp = time.strftime("%H:%M:%S - ")
 
 	try:
 		Log.Debug("{}{}".format(timestamp, dbgline))  # Correct Plex logging
 	except NameError:
-		print("\n❌ Log object is not available. Running in a non-Plex environment.")
+		print("❌ Log object is not available. Running in a non-Plex environment.")
 
 # endregion
 
@@ -42,15 +43,15 @@ def get_league_info(league_id, SPORTSDB_API):
 		if "leagues" in data and data["leagues"]:
 			league_metadata = data["leagues"][0]  # First (and only) league entry
 
-			LogMessage("\n✅ Retrieved league metadata for: {}".format(league_id))
+			LogMessage("✅ Retrieved league metadata for: {}".format(league_id))
 			return league_metadata  # Return the dictionary with metadata
 
 		else:
-			LogMessage("\n❌ No metadata found for league ID: {}".format(league_id))
+			LogMessage("❌ No metadata found for league ID: {}".format(league_id))
 			return None
 
 	except urllib2.URLError as e:
-		LogMessage("\n⚠ API Request Error: {}".format(e))
+		LogMessage("⚠ API Request Error: {}".format(e))
 		return None
 
 # endregion
@@ -67,15 +68,15 @@ def get_team_images(league_id, SPORTSDB_API):
 
 		if "teams" in data and data["teams"]:
 			team_images = data["teams"]
-			LogMessage("\n✅ Retrieved team images for: {}".format(league_id))
+			LogMessage("✅ Retrieved team images for: {}".format(league_id))
 			return team_images  # Return the dictionary with metadata
 
 		else:
-			LogMessage("\n❌ No team images found for league ID: {}".format(league_id))
+			LogMessage("❌ No team images found for league ID: {}".format(league_id))
 			return None
 
 	except urllib2.URLError as e:
-		LogMessage("\n⚠ API Request Error: {}".format(e))
+		LogMessage("⚠ API Request Error: {}".format(e))
 		return None
 	
 # endregion
@@ -89,15 +90,15 @@ def get_team_images(league_id, SPORTSDB_API):
 # region
 
 def get_season_metadata(league_id, season_id, API_KEY):
-	LogMessage("\n🔍 Fetching season metadata for League ID: {} and Season ID: {}".format(league_id, season_id))
+	LogMessage("🔍 Fetching season metadata for League ID: {} and Season ID: {}".format(league_id, season_id))
 
 	API_BASE_URL_V2 = "https://www.thesportsdb.com/api/v2/json/"  # Ensure this is correct
 
 	season_posters_url = "{}list/seasonposters/{}".format(API_BASE_URL_V2, league_id)
 	season_stuff_url = "{}list/seasons/{}".format(API_BASE_URL_V2, league_id)
 
-	LogMessage("\n🗨️ Season Posters API URL: {}".format(season_posters_url))
-	LogMessage("\n🗨️ Season Stuff API URL: {}".format(season_stuff_url))
+	LogMessage("🗨️ Season Posters API URL: {}".format(season_posters_url))
+	LogMessage("🗨️ Season Stuff API URL: {}".format(season_stuff_url))
 
 	headers = {
 		"X-API-KEY": "{}".format(API_KEY),  # Corrected header format for Python 2
@@ -117,13 +118,13 @@ def get_season_metadata(league_id, season_id, API_KEY):
 			LogMessage("DATA RESULTS: {}".format(data))
 			return data
 		except urllib2.HTTPError as e:
-			LogMessage("\n⚠ HTTP Error: {} - {}".format(e.code, e.reason))
+			LogMessage("⚠ HTTP Error: {} - {}".format(e.code, e.reason))
 			return None
 		except urllib2.URLError as e:
-			LogMessage("\n⚠ URL Error: {}".format(e.reason))
+			LogMessage("⚠ URL Error: {}".format(e.reason))
 			return None
 		except Exception as e:
-			LogMessage("\n⚠ Unexpected Error: {}".format(str(e)))
+			LogMessage("⚠ Unexpected Error: {}".format(str(e)))
 			return None
 
 	# Fetch season posters
@@ -249,12 +250,45 @@ def extract_round_from_filename(filename):
 		r"GW(\d+)",   # GW4
 	]    
 	
-	for pattern in patterns:
-		match = re.search(pattern, filename, re.IGNORECASE)
-		if match:
-			return int(match.group(1))  # ✅ Correctly returns the first valid match
+	compiled_patterns = [re.compile(p, re.IGNORECASE) for p in patterns]
 
-	return None  # ✅ Returns None if no pattern matches
+	# Check for numeric patterns first
+	for pattern in compiled_patterns:
+		match = pattern.search(filename)
+		if match:
+			try:
+				return int(match.group(1))  # ✅ Convert to int safely
+			except (IndexError, ValueError):
+				continue  # ✅ Skip any incorrect matches
+
+	LogMessage("►► No numeric round found in filename: {}".format(filename))
+
+	# If no numeric round was found, check the special cases from JSON
+	json_filepath = "C:/Users/mjc_c/AppData/Local/Plex Media Server/Scanners/Series/SpecialRoundsMap.json"
+
+	LogMessage("►► Checking for special cases in SpecialRoundsMap.json.")
+
+	try:
+		with io.open(json_filepath, "r") as file:
+			special_cases = json.load(file)
+
+			if not isinstance(special_cases, dict):
+				return None  # Ensure it's a valid dictionary
+	except Exception as e:
+		LogMessage("►► Error reading JSON file: {}".format(str(e)))
+		return None  # If JSON fails or doesn't exist, return None
+
+	# Normalize filename to lowercase before checking for special cases
+	lower_filename = filename.lower()
+
+	for keyword, round_value in special_cases.items():
+		if re.search(r"\b" + re.escape(keyword) + r"\b", lower_filename, re.IGNORECASE):
+
+			LogMessage("►► Special case found! Keyword: {}, Round: {}".format(keyword, round_value))
+			return round_value
+
+	LogMessage("►► No special cases found in filename: {}".format(filename))
+	return None  # Return None if no match is found
 
 	# endregion
 
@@ -269,15 +303,15 @@ def get_events_on_date(formatted_date, league_id, SPORTSDB_API):
 		event_date_round_data = json.load(response)
 
 		if "events" in event_date_round_data and event_date_round_data["events"]:
-			#LogMessage("\n✅ Retrieved events on date: {} for: {}".format(formatted_date, league_id))
+			#LogMessage("✅ Retrieved events on date: {} for: {}".format(formatted_date, league_id))
 			return event_date_round_data["events"]  # Uses 'event_date_round_data' instead of 'data'
 
 		else:
-			LogMessage("\n❌ No events found for date: {}".format(formatted_date))
+			LogMessage("❌ No events found for date: {}".format(formatted_date))
 			return None
 
 	except urllib2.URLError as e:
-		LogMessage("\n⚠ API Request Error: {}".format(e))
+		LogMessage("⚠ API Request Error: {}".format(e))
 		return None
 
 # endregion
@@ -288,7 +322,7 @@ def get_events_on_date(formatted_date, league_id, SPORTSDB_API):
 def get_events_in_round(round_number, league_id, SPORTSDB_API, season_number):
 	# if the season number is 8 characters (########) split with hyphen (####-####)
 
-	LogMessage("\n🔎🔎🔎🔎 Getting events in round: {} for: {} season: {}".format(round_number, league_id, season_number))
+	LogMessage("🔎 Getting events in round: {} for: {} season: {}".format(round_number, league_id, season_number))
 
 	if len(str(season_number)) == 8:
 		season_number = season_number[:4] + "-" + season_number[4:]
@@ -300,15 +334,15 @@ def get_events_in_round(round_number, league_id, SPORTSDB_API, season_number):
 		event_date_round_data = json.load(response) 
 
 		if "events" in event_date_round_data and event_date_round_data["events"]:
-			#LogMessage("\n✅ Retrieved events in round {} For: {} season: {}".format(round_number, league_id, season_number))
+			#LogMessage("✅ Retrieved events in round {} For: {} season: {}".format(round_number, league_id, season_number))
 			return event_date_round_data["events"]
 
 		else:
-			LogMessage("\n❌ No events found for round: {}".format(round_number))
+			LogMessage("❌ No events found for round: {}".format(round_number))
 			return None
 
 	except urllib2.URLError as e:
-		LogMessage("\n⚠ API Request Error: {}".format(e))
+		LogMessage("⚠ API Request Error: {}".format(e))
 		return None
 
 # endregion
@@ -352,16 +386,26 @@ def remove_stop_phrases(filename_words, stop_phrases): # Remove multi-word stop 
 
 # endregion
 
-def compute_match_score(filename_words, event_words):
+def compute_match_score(filename_words, event_words, league_name):
+
+	# Convert league name into a list of words ( to ad to stop phrases)
+	league_name_words = league_name.lower().split()
+
+	# Only create ONE stop phrase for the full league name
+	league_stop_phrase = (tuple(league_name_words),)  # Keep as one unit
 
 	# Combinations of adjecant words or single words to be removed from matching
 	stop_phrases = [
-			("formula", "1"),  # League names with numbers can mess things up.
 			("vs",),           # Single-word stop phrase
 			("and",),       
 			("the",),
-			("fc",)   
+			("fc",)				# Can also be adjacent groups of words. For example: ("formula", "1"),
 		]
+
+	# Add league name stop phrases
+	stop_phrases.extend(league_stop_phrase)
+
+	#LogMessage("STOP PHRASES WITH LEAGUE NAME ADDED: {}".format(stop_phrases))
 
 	# Convert sets to lists for ordered processing
 	filename_words = list(filename_words)  # Convert set to list
@@ -395,26 +439,27 @@ def compute_match_score(filename_words, event_words):
 def find_matching_event(filename, event_date_round_data):
 	
 	filename_words = clean_text(filename)
-	LogMessage("📂 Extracted words from filename: {}".format(filename_words))
+	LogMessage("📂 Extracted words from filename: {}\n".format(filename_words))
 
 	# Initialize best_match and best_score
 	best_matches = []  # Store all matches with the best score
 	best_score = 0
 
 	for event in event_date_round_data:
+		league_name = event.get("strLeague", "") # To add to stop phrases
 		event_name = event.get("strEvent", "")
 		event_id = event.get("idEvent", "Unknown ID")
 		event_text = "{} {} {}".format(event.get("strEvent", ""), event.get("strHomeTeam", ""), event.get("strAwayTeam", ""))
 		event_words = clean_text(event_text)
 
 		# Compute match score (higher = better match)
-		match_score, common_words, filename_words = compute_match_score(filename_words, event_words)
+		match_score, common_words, filename_words = compute_match_score(filename_words, event_words, league_name)
 
 		# NEVER DELETE THESE LOGS (JUST COMMENT THEM OUT!!!!)
-		LogMessage("\nEvent ID: {}".format(event_id))
+		LogMessage("Event ID: {}".format(event_id))
 		LogMessage("Filename words: {}".format(filename_words))
 		LogMessage("🆚 Event words: {}".format(event_words))
-		LogMessage("  Common words: {}".format(common_words))
+		LogMessage("Common words: {}".format(common_words))
 		LogMessage("➡ Match Score: {}".format(match_score))
 		LogMessage("Event Name: {}\n".format(event_name))
 		# NEVER DELETE THESE LOGS (JUST COMMENT THEM OUT!!!!)
@@ -466,7 +511,7 @@ def get_event_id(season_number, episode_number, episode_path, league_id, SPORTSD
 
 	filename = os.path.basename(episode_path)
 	formatted_date = extract_date_from_filename(filename)
-	# LogMessage("\n🗨️ FORMATTED DATE: {} For Episode: {}".format(formatted_date, episode_path))
+	# LogMessage("🗨️ FORMATTED DATE: {} For Episode: {}".format(formatted_date, episode_path))
 
 	# endregion
 
@@ -475,10 +520,10 @@ def get_event_id(season_number, episode_number, episode_path, league_id, SPORTSD
 
 	if formatted_date is None:
 		round_number = extract_round_from_filename(filename)
-		# LogMessage("\n🗨️ ROUND NUMBER: {}".format(round_number))
+		# LogMessage("🗨️ ROUND NUMBER: {}".format(round_number))
 
 		if round_number is None:
-			LogMessage("\n⚠️ No date or round found in filename: {}".format(filename))
+			LogMessage("⚠️ No date or round found in filename: {}".format(filename))
 			return None
 
 			# endregion
@@ -493,7 +538,7 @@ def get_event_id(season_number, episode_number, episode_path, league_id, SPORTSD
 	
 	# If no event data
 	if event_date_round_data is None:
-		LogMessage("\n❌ No events found for date: {}".format(formatted_date))
+		LogMessage("❌ No events found for date: {}".format(formatted_date))
 		return None
 
 		# endregion
@@ -504,7 +549,7 @@ def get_event_id(season_number, episode_number, episode_path, league_id, SPORTSD
 	event_id = find_matching_event(filename, event_date_round_data)
 
 	if event_id is None:
-		LogMessage("\n❌ No matching events found for filename: {}".format(filename))
+		LogMessage("❌ No matching events found for filename: {}".format(filename))
 		return None
 	else:
 		return event_id
@@ -522,7 +567,7 @@ def get_event_id(season_number, episode_number, episode_path, league_id, SPORTSD
 def get_event_info(SPORTSDB_API, event_id):
 	
 	event_info_url = "{}/lookupevent.php?id={}".format(SPORTSDB_API, event_id)
-	#LogMessage("\n🔍 Requesting from URL: {}".format(event_info_url))
+	#LogMessage("🔍 Requesting from URL: {}".format(event_info_url))
 
 	try:
 		response = urllib2.urlopen(event_info_url, timeout=10)
@@ -538,11 +583,11 @@ def get_event_info(SPORTSDB_API, event_id):
 			return event_metadata  # Return the corrected dictionary
 
 		else:
-			LogMessage("\n❌ No metadata found for event ID: {}".format(event_id))
+			LogMessage("❌ No metadata found for event ID: {}".format(event_id))
 			return None
 
 	except urllib2.URLError as e:
-		LogMessage("\n⚠ API Request Error: {}".format(e))
+		LogMessage("⚠ API Request Error: {}".format(e))
 		return None
 
 # endregion

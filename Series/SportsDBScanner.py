@@ -155,7 +155,10 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 		# endregion
 
 		# region Get the event ID from the API_CLIENT
-		LogMessage("\nProcessing: {}\nSeason: {}\nFilename: {}".format(league_id, season_name, filename))
+		LogMessage("►► Processing Filename: {}".format(filename))
+		LogMessage("►► Processing League: {}".format(league_id))
+		LogMessage("►► Season: {}\n".format(season_name))
+
 		event_id, event_title, event_date, order_number = get_event_id(league_id, season_name, filename, SPORTSDB_API)
 		# endregion
 
@@ -187,7 +190,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 		LogMessage("►► SEASON: {}".format(season_number))
 		LogMessage("►► EVENT TITLE: {}".format(event_title))
 		LogMessage("►► EVENT ID: {}".format(event_id))
-		LogMessage("►► EVENT DATE: {}".format(event_date))
+		LogMessage("►► EVENT DATE & ORDER #: {}".format(event_date))
 		LogMessage("►► EVENT YEAR: {}".format(event_year))
 
 		# endregion
@@ -204,7 +207,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 		media.parts.append(file) # Append the file path
 		mediaList.append(media)
 
-		LogMessage("►► Processed 'media' {}\n".format(media))
+		LogMessage("►► Processed 'media' {}\n\n".format(media))
 
 		# endregion
 
