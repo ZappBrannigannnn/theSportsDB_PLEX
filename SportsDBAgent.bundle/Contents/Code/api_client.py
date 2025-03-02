@@ -387,7 +387,7 @@ def remove_stop_phrases(words, league_name): # Remove multi-word stop phrases fr
 	stop_phrases.extend(league_stop_phrase)
 
 	i = 0
-	while i < len(words) - 1:  # Stop before the last word to avoid index errors
+	while i < len(words):  # Stop before the last word to avoid index errors
 		for phrase in stop_phrases:
 			# Check if the current and next words match the stop phrase
 			if words[i:i + len(phrase)] == list(phrase):
