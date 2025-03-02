@@ -304,8 +304,6 @@ class SportsDBAgent(Agent.TV_Shows):
 
 		league_name = os.path.basename(os.path.dirname(os.path.dirname(episode_path)))
 
-		LogMessage("LEAGE NAMEEEEEE {}".format(league_name))
-
 		event_id = get_event_id(league_name, season_number, episode_number, episode_path, league_id, SPORTSDB_API)
 		
 		return event_id
@@ -342,6 +340,7 @@ class SportsDBAgent(Agent.TV_Shows):
 		country = event_metadata.get('strCountry', 'Unknown Country') or 'Unknown Country'
 
 		thumb = event_metadata.get('strThumb', '') or ''
+
 		fanart = event_metadata.get('strFanart', '') or ''
 
 		# Format summary
