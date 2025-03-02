@@ -302,7 +302,11 @@ class SportsDBAgent(Agent.TV_Shows):
 
 	def call_get_event_id(self, season_number, episode_number, episode_path, league_id):
 
-		event_id = get_event_id(season_number, episode_number, episode_path, league_id, SPORTSDB_API)
+		league_name = os.path.basename(os.path.dirname(os.path.dirname(episode_path)))
+
+		LogMessage("LEAGE NAMEEEEEE {}".format(league_name))
+
+		event_id = get_event_id(league_name, season_number, episode_number, episode_path, league_id, SPORTSDB_API)
 		
 		return event_id
 

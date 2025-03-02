@@ -286,32 +286,14 @@ def clean_text(text):
 # region (4.2) compute_match_score HELPER FUNCTION
 
 # region (4.2.1) remove_stop_phrases from matching HELPER FUNCTION
-def remove_stop_phrases(filename_words, stop_phrases): # Remove multi-word stop phrases from a list of words.
-
-	i = 0
-	while i < len(filename_words) - 1:  # Stop before the last word to avoid index errors
-		for phrase in stop_phrases:
-			# Check if the current and next words match the stop phrase
-			if filename_words[i:i + len(phrase)] == list(phrase):
-				# Remove the stop phrase
-				filename_words[i:i + len(phrase)] = []
-				i -= 1  # Adjust index after removal
-				break
-		i += 1
-	
-	return filename_words
-
-# endregion
-
-def compute_match_score(filename_words, event_words, league_name):
+def remove_stop_phrases(words, league_name): # Remove multi-word stop phrases from a list of words.
 
 	# Convert league name into a list of words ( to add to stop phrases)
-	league_name_words = league_name.lower().split()
-
+	league_name_words = clean_text(league_name)
 	# Only create ONE stop phrase for the full league name
 	league_stop_phrase = (tuple(league_name_words),)  # Keep as one unit
 
-	# Combinations of adjecant words or single words to be removed from matching
+	# Combinations of adjacent words or single words to be removed from matching
 	stop_phrases = [
 			("vs",),           # Single-word stop phrase
 			("and",),       
@@ -322,19 +304,32 @@ def compute_match_score(filename_words, event_words, league_name):
 	# Add league name stop phrases (league names with numbers can mess up matching)
 	stop_phrases.extend(league_stop_phrase)
 
+	i = 0
+	while i < len(words) - 1:  # Stop before the last word to avoid index errors
+		for phrase in stop_phrases:
+			# Check if the current and next words match the stop phrase
+			if words[i:i + len(phrase)] == list(phrase):
+				# Remove the stop phrase
+				words[i:i + len(phrase)] = []
+				i -= 1  # Adjust index after removal
+				break
+		i += 1
+	
 	#LogMessage("STOP PHRASES WITH LEAGUE NAME ADDED: {}".format(stop_phrases))
 
+	return words
+
+# endregion
+
+def compute_match_score(filename_words, event_words, league_name):
+
 	# Convert sets to lists for ordered processing
-	filename_words = list(filename_words)  # Convert set to list
 	event_words = list(event_words)        # Convert set to list
 
-	# Remove stop phrases from filename_words
-	filename_words = remove_stop_phrases(filename_words, stop_phrases)
 	# Remove stop phrases from event_words
-	event_words = remove_stop_phrases(event_words, stop_phrases)
+	event_words = remove_stop_phrases(event_words, league_name)
 
 	# Convert back to sets for intersection
-	filename_words = set(filename_words)
 	event_words = set(event_words)
 
 	# Compute match score based on hybrid matching logic
@@ -348,55 +343,118 @@ def compute_match_score(filename_words, event_words, league_name):
 				if event_word in filename_word:  # Substring match
 					common_words.add(filename_word)
 
-	return len(common_words), common_words, filename_words  # Score is the count of matching words
+	return len(common_words), common_words  # Score is the count of matching words
 # endregion
 
 # region (4.3) find_matching_event FUNCTION
 
-def find_matching_event(filename, event_date_round_data):
+def find_matching_event(league_name, filename, event_date_round_data):
 	
+	# Split filename into words
 	filename_words = clean_text(filename)
+	# Convert set to lists for ordered processing
+	filename_words = list(filename_words)
+
+	# Remove stop phrases from filename_words
+	filename_words = remove_stop_phrases(filename_words, league_name)
+
+	# Convert back to sets for intersection
+	filename_words = set(filename_words)
 
 	# Initialize best_match and best_score
 	best_matches = []  # Store all matches with the best score
 	best_score = 0
 
+	# region (FIRST PASS) Get the necessary info from event_date_round_data
 	for event in event_date_round_data:
-		league_name = event.get("strLeague") # To add to stop phrases
 		event_name = event.get("strEvent", "")
 		event_id = event.get("idEvent", "Unknown ID")
-		event_text = "{} {} {}".format(event.get("strEvent", ""), event.get("strHomeTeam", ""), event.get("strAwayTeam", ""))
+
+		event_text = "{} {} {}".format(event_name, event.get("strHomeTeam", ""), event.get("strAwayTeam", ""))
 		event_words = clean_text(event_text)
 
 		# Compute match score (higher = better match)
-		match_score, common_words, filename_words = compute_match_score(filename_words, event_words, league_name)
+		match_score, common_words = compute_match_score(filename_words, event_words, league_name)
 
-		# NEVER DELETE THESE LOGS (JUST COMMENT THEM OUT!!!!)
+		# Store match details
+		extra_words = len(event_words) - len(common_words)
+
+		# region NEVER DELETE THESE LOGS (JUST COMMENT THEM OUT IF NEEDED!!!!)
 		LogMessage("Event ID: {}".format(event_id))
 		LogMessage("Filename words: {}".format(filename_words))
 		LogMessage("🆚 Event words: {}".format(event_words))
 		LogMessage("  Common words: {}".format(common_words))
 		LogMessage("➡ Match Score: {}".format(match_score))
 		LogMessage("Event Name: {}\n".format(event_name))
-		# NEVER DELETE THESE LOGS (JUST COMMENT THEM OUT!!!!)
+		# endregion NEVER DELETE THESE LOGS (JUST COMMENT THEM OUT IF NEEDED!!!!)
 
+		# Update best matches
 		if match_score > best_score:
 			best_score = match_score
-
-			best_matches = [{"event": event, "extra_words": len(event_words) - len(common_words)}]  # Reset best_matches
+			best_matches = [{"event": event, "extra_words": extra_words, "common_words":common_words}]
 		elif match_score == best_score:
-			# Calculate extra words for this event
-			extra_words = len(event_words) - len(common_words)
-			best_matches.append({"event": event, "extra_words": extra_words})  # Add to best_matches if tied
+			best_matches.append({"event": event, "extra_words": extra_words, "common_words":common_words})
 
-	# Apply tiebreaker if needed
+		# endregion
+
+	# region (TIEBREAKER 1): Choose the event with the **fewest extra words**
 	if len(best_matches) > 1:
-		LogMessage("📢 Multiple events with the same match score. Applying tiebreaker...")
-		# Select the event with the fewest extra words
+		LogMessage("📢 Multiple events with the same match score. Applying Tiebreaker 1 (Fewest Extra Words)...")
+
+		# Log each event being considered before choosing
+		for match in best_matches:
+			event = match["event"]
+			event_id = event.get("idEvent", "Unknown ID")
+			event_name = event.get("strEvent", "")
+
+			LogMessage("Event ID: {}".format(event_id))
+			LogMessage("Filename words: {}".format(filename_words))
+			LogMessage("🆚 Event words: {}".format(clean_text("{} {} {}".format(event_name, event.get('strHomeTeam', ''), event.get('strAwayTeam', '')))))
+			LogMessage("  Common words: {}".format(match["common_words"]))
+			LogMessage("  Extra Words: {}".format(match["extra_words"]))
+			LogMessage("\n")
+
+		# Pick the event with the fewest extra words
 		best_match = min(best_matches, key=lambda x: x["extra_words"])["event"]
+
 	else:
 		best_match = best_matches[0]["event"] if best_matches else None
+		# endregion
 
+	# region (TIEBREAKER 2): If still tied, **add event description** and recompute
+	if len(best_matches) > 1:
+		LogMessage("📢 Still tied Applying Tiebreaker 2 (Including Event Description)...")
+
+		updated_matches = []
+		for match in best_matches:
+			event = match["event"]
+			event_text = "{} {} {} {}".format(
+				event.get("strEvent", ""), event.get("strHomeTeam", ""), event.get("strAwayTeam", ""), event.get("strDescriptionEN", "")
+			)
+			event_words = clean_text(event_text)
+
+			match_score, common_words = compute_match_score(filename_words, event_words, event.get("strLeague"))
+			extra_words = len(event_words) - len(common_words)
+
+			# Log updated match score
+			LogMessage("Event ID: {}".format(event.get("idEvent")))
+			LogMessage("Filename words: {}".format(filename_words))
+			LogMessage("🆚 Updated Event words: {}".format(event_words))
+			LogMessage("  Common words: {}".format(common_words))
+			LogMessage("➡ New Match Score: {}".format(match_score))
+			LogMessage("Event Name: {}\n".format(event.get("strEvent")))
+
+			updated_matches.append({"event": event, "extra_words": extra_words, "score": match_score})
+
+		# Determine best match after Tiebreaker 2
+		best_score = max(m["score"] for m in updated_matches)
+		best_matches = [m for m in updated_matches if m["score"] == best_score]
+
+		best_match = best_matches[0]["event"] if best_matches else None
+
+		# endregion
+
+	# Final Match Decision
 	if best_match:
 		event_id = best_match.get("idEvent")
 		event_title = best_match.get("strEvent")
@@ -434,7 +492,7 @@ def get_event_order_number(event_date_data, event_id):
 # region GET_EVENT_ID function
 
 # region get_event_id initialize
-def get_event_id(league_id, season_name, filename, SPORTSDB_API):
+def get_event_id(league_name, league_id, season_name, filename, SPORTSDB_API):
 	LogMessage("🔍 Getting event ID from API for: {}".format(filename))
 	# Initialize event_id and event data placeholders
 	event_id = None
@@ -489,7 +547,7 @@ def get_event_id(league_id, season_name, filename, SPORTSDB_API):
 		LogMessage("❌ No event data available for matching: {}".format(filename))
 		return None  # Prevents calling `find_matching_event` with None
 
-	event_match = find_matching_event(filename, event_date_round_data)
+	event_match = find_matching_event(league_name, filename, event_date_round_data)
 
 	if event_match is None:
 		LogMessage("❌ No matching events found for filename: {}".format(filename))

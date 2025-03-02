@@ -37,6 +37,7 @@
 "E:\SPORTS\English Premier League\2021-2022\Premier.League.2021.2022.Round.12.Chelsea.vs.Leicester.720p.HDTV.x265-ReleaseHQ.mp4"
 "E:\SPORTS\English Premier League\2022-2023\Premier.League.2022-2023.MW18.SNF.Brighton.and.Hove.Albion-Arsenal.SkyPLHD.1080p.IPTV.AAC2.0.x264.Eng-WB60.mp4"
 "E:\SPORTS\English Premier League\2023-2024\Soccer Premier League Manchester City Arsenal 31 03 2024 1080p25.mp4"
+
 THESE ONES WORKED BECAUSE THEY WERE THE ONLY ONES ON THE SPECIFIC DATE:
 "E:\SPORTS\English Premier League\2022-2023\20230811_EPL_23.24_R.01_BUR_vs_MCI_[rgfootball.net]_720p.50_STU.mp4"
 "E:\SPORTS\English Premier League\2023-2024\20240816_EPL_24.25_R.01_MUN_vs_FUL_[rgfootball.net]_720p.25.mp4"
@@ -55,7 +56,8 @@ TO THIS:
 "E:\SPORTS\ATP World Tour\2023\ATP USOpen 2023-09-04 Djokovic v Gojo SS 720p H264 English Nuw.mp4"
 TO INCLUDE THE ROUND OR DATE AS IT IS IN theSportsDB.com
 
-Therefore, I would suggest trying it without renaming first. And if it fails to find a match or grabs the wrong one then rename and scan again.
+- I would suggest trying it without renaming first. And if it fails to find a match or grabs the wrong one then rename and scan again. 
+- Adding dates is always going to be better than adding rounds.
 
 #######################################################################################################################################################################
 
@@ -83,3 +85,5 @@ The AGENT works by:
 8.  It matches words from the filename against the team names and alternate team names in those events. 
 9.  The event with the highest matching score is the event used
 10. It gets metadata for that event and applies it to the episode
+
+There's a little more to it but that's basically it.

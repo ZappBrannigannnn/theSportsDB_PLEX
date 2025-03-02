@@ -159,7 +159,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 		LogMessage("►► Processing League: {}".format(league_id))
 		LogMessage("►► Season: {}\n".format(season_name))
 
-		event_id, event_title, event_date, order_number = get_event_id(league_id, season_name, filename, SPORTSDB_API)
+		event_id, event_title, event_date, order_number = get_event_id(league_name, league_id, season_name, filename, SPORTSDB_API)
 		# endregion
 
 		# region Process the event info before inserting.
