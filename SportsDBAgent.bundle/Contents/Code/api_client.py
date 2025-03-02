@@ -524,14 +524,20 @@ def find_matching_event(league_name, filename, event_date_round_data):
 
 	# region (TIEBREAKER 2): If still tied, **add event description** and recompute
 	if len(best_matches) > 1:
-		LogMessage("📢 Still tied Applying Tiebreaker 2 (Including Event Description)...")
+		LogMessage("📢 Still tied... Applying Tiebreaker 2 (Including Event Description)...")
 
 		updated_matches = []
 		for match in best_matches:
 			event = match["event"]
-			event_text = "{} {} {} {}".format(
-				event.get("strEvent", ""), event.get("strHomeTeam", ""), event.get("strAwayTeam", ""), event.get("strDescriptionEN", "")
+
+			# Ensure all fields are Unicode (Python 2 fix)
+			event_text = u"{} {} {} {}".format(
+				unicode(event.get("strEvent", ""), "utf-8") if isinstance(event.get("strEvent", ""), str) else event.get("strEvent", ""),
+				unicode(event.get("strHomeTeam", ""), "utf-8") if isinstance(event.get("strHomeTeam", ""), str) else event.get("strHomeTeam", ""),
+				unicode(event.get("strAwayTeam", ""), "utf-8") if isinstance(event.get("strAwayTeam", ""), str) else event.get("strAwayTeam", ""),
+				unicode(event.get("strDescriptionEN", ""), "utf-8") if isinstance(event.get("strDescriptionEN", ""), str) else event.get("strDescriptionEN", "")
 			)
+
 			event_words = clean_text(event_text)
 
 			match_score, common_words = compute_match_score(filename_words, event_words, event.get("strLeague"))
