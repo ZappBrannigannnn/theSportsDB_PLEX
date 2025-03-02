@@ -200,7 +200,9 @@ def extract_date_from_filename(filename):
 
 # (2) Get ROUND from filename
 # region
-def extract_round_from_filename(filename):
+def extract_round_from_filename(filename, league_name):
+	# Extracts the round number from a filename, checking standard patterns first and falling back to a JSON file for special cases.
+
 	patterns = [
 		r"Round (\d+)",     # Round 12
 		r"Round-(\d+)",     # Round-12
@@ -250,41 +252,60 @@ def extract_round_from_filename(filename):
 		r"GW(\d+)",   # GW4
 	]    
 	
-	compiled_patterns = [re.compile(p, re.IGNORECASE) for p in patterns]
+	flags = re.IGNORECASE
+	compiled_patterns = [re.compile(p, flags) for p in patterns]
 
-	# Check for numeric patterns first
+	# First, check for numeric round matches (fastest)
 	for pattern in compiled_patterns:
 		match = pattern.search(filename)
 		if match:
 			try:
-				return int(match.group(1))  # ✅ Convert to int safely
-			except (IndexError, ValueError):
-				continue  # ✅ Skip any incorrect matches
+				return int(match.group(1))  # Convert match to integer
+			except ValueError:
+				continue  # Skip any incorrect matches
 
 	LogMessage("►► No numeric round found in filename: {}".format(filename))
 
 	# If no numeric round was found, check the special cases from JSON
 	json_filepath = "C:/Users/mjc_c/AppData/Local/Plex Media Server/Scanners/Series/SpecialRoundsMap.json"
 
+	if not os.path.exists(json_filepath):
+		LogMessage("►► JSON file not found: {}".format(json_filepath))
+		return None
+
 	LogMessage("►► Checking for special cases in SpecialRoundsMap.json.")
 
 	try:
+		# Opening the json file
 		with io.open(json_filepath, "r") as file:
 			special_cases = json.load(file)
 
-			if not isinstance(special_cases, dict):
-				return None  # Ensure it's a valid dictionary
+			# Remove metadata keys before processing
+			special_cases.pop("_comment", None)
+			special_cases.pop("_instructions", None)
+
 	except Exception as e:
 		LogMessage("►► Error reading JSON file: {}".format(str(e)))
 		return None  # If JSON fails or doesn't exist, return None
 
+	if not isinstance(special_cases, dict):
+		return None  # Ensure it's a valid dictionary
+
+	# Get league mappings (or default)
+	league_mappings = special_cases.get(league_name, special_cases.get("default", {}))
+
+	# Preprocess mappings: Lowercase all keywords for fast lookup
+	if league_mappings:
+		league_mappings = {k.lower(): v for k, v in league_mappings.items()}
+
 	# Normalize filename to lowercase before checking for special cases
 	lower_filename = filename.lower()
 
-	for keyword, round_value in special_cases.items():
-		if re.search(r"\b" + re.escape(keyword) + r"\b", lower_filename, re.IGNORECASE):
 
-			LogMessage("►► Special case found! Keyword: {}, Round: {}".format(keyword, round_value))
+	for keyword, round_value in league_mappings.items():
+		# Use word-boundary regex to ensure exact word matching
+		if re.search(r"\b" + re.escape(keyword) + r"\b", lower_filename, re.IGNORECASE):
+			LogMessage("►► Special case found! League: {}, Keyword: {}, Round: {}".format(league_name, keyword, round_value))
 			return round_value
 
 	LogMessage("►► No special cases found in filename: {}".format(filename))
@@ -574,7 +595,7 @@ def get_event_id(league_name, season_number, episode_number, episode_path, leagu
 	# region
 
 	if formatted_date is None:
-		round_number = extract_round_from_filename(filename)
+		round_number = extract_round_from_filename(filename, league_name)
 		# LogMessage("🗨️ ROUND NUMBER: {}".format(round_number))
 
 		if round_number is None:
