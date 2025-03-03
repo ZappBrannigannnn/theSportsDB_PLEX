@@ -27,6 +27,6 @@
       "id": "theSportsDBAPIKey",
       "label": "What is your TheSportsDB API key?",
       "type": "text",
-      "default": ""
+      "default": "98752398"
     }
 ]
