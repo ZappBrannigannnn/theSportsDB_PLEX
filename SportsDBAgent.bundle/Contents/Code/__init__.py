@@ -8,7 +8,7 @@ import io
 
 from api_client import get_league_info
 from api_client import get_team_images
-#from api_client import get_season_metadata
+from api_client import get_season_posters
 from api_client import get_event_id
 from api_client import get_event_info
 
@@ -209,8 +209,7 @@ class SportsDBAgent(Agent.TV_Shows):
 
 	# endregion
 
-	# (2) call_get_team_images (CALLED BY UPDATE)
-	# region
+	# region (2) call_get_team_images (CALLED BY UPDATE)
 	def call_get_team_images(self, metadata, league_id):
 		team_images = get_team_images(league_id, SPORTSDB_API)  # This is a LIST
 
@@ -237,62 +236,44 @@ class SportsDBAgent(Agent.TV_Shows):
 
 
 
-	"""
-	# (3) Season images CAN'T GET SUMMARY TO WORK!!!
-	# region
-	def season_stuff(self, metadata, media, league_id):
-		# Ensure seasons have posters and artwork by fetching from TheSportsDB if missing.        
-		LogMessage("🔍 Checking SEASON metadata for show: {}".format(metadata.title))
+	# (3) region: Fetch & Apply Season Poster
+	def call_get_season_posters(self, metadata, media, league_id, season_number):
 
-		for season_id in media.seasons:
-			LogMessage("📅 Processing Season: {}".format(season_id))
+		# Convert season number if it's 8 characters long (e.g., 20242025 -> 2024-2025)
+		if len(str(season_number)) == 8:
+			season_number_split = season_number[:4] + "-" + season_number[4:]
+		else:
+			season_number_split = str(season_number)  # Keep it unchanged for regular seasons
 
-			# Create season metadata if it doesn't exist albeit empty (initialize)
-			if season_id not in metadata.seasons:
-				LogMessage("⚠️ Season {} does not exist in metadata.".format(season_id))
-				metadata.seasons[season_id] = Metadata.Season()
-			else:
-				LogMessage("✅ Season {} already exists in metadata.".format(season_id))
-			
-			# Assign to be used in API search
-			season_metadata = metadata.seasons[season_id]
+		LogMessage("🔍 Fetching season posters for League ID: {} | Season: {}".format(league_id, season_number_split))
 
-			# Skip if season already has both poster & artwork
-			if season_metadata.art and season_metadata.posters:
-				LogMessage("✅ Season {} already has artwork and posters.".format(season_id))
-				continue
-			else:
-				LogMessage("⚠️ Season {} does not have both poster and artwork.".format(season_id))
+		# Get season posters from API (Returns dictionary {season_number: poster_url})
+		season_posters = get_season_posters(league_id, SPORTSDB_API)
 
-			# Fetch season metadata from TheSportsDB API ###<><><><><><><><><><><><><><><><<<<<<>>>><><<<<<<<><><
+		if not season_posters:
+			LogMessage("❌ Something went wrong getting season posters for League ID: {}".format(league_id))
+			return  # Stop if no valid posters are available
 
-			# Make season_id usable before using it for the API
-			season_id = str(season_id)
+		# DELETE ### Debugging
+		LogMessage("✅ Found season posters for League ID: {}:\n{}".format(league_id, season_posters))
 
-			season_data = get_season_metadata(league_id, season_id, API_KEY)
+		# Find the correct season poster using the formatted season number
+		this_season_poster = season_posters.get(season_number_split)  # Use the converted key
 
-			if not season_data:
-				LogMessage("⚠️ No metadata found for Season {}!".format(season_id))
-				continue
+		if not this_season_poster:
+			LogMessage("❌ No valid poster found for Season {}.".format(season_number))
+			return  # Stop if no poster found
 
-			# Get poster and fanart URLs
-			poster_url = season_data.get("strPoster")
-			fanart_url = season_data.get("strFanart")
+		# Ensure the season metadata exists before applying the poster
+		if season_number in metadata.seasons:
+			metadata.seasons[season_number].posters[this_season_poster] = Proxy.Preview(
+				HTTP.Request(this_season_poster, sleep=0.5).content, sort_order=1
+			)
+			LogMessage("✅ Added poster for Season {}: {}".format(season_number, this_season_poster))
+		else:
+			LogMessage("⚠️ Season {} metadata not found, cannot apply poster.".format(season_number))
 
-			# Download and assign missing poster
-			if not season_metadata.posters and poster_url:
-				season_metadata.posters[poster_url] = Proxy.Preview(HTTP.Request(poster_url, sleep=0.5).content, sort_order=1)
-				LogMessage("✅ Added poster for Season {}: {}".format(season_id, poster_url))
 
-			# Download and assign missing artwork
-			if not season_metadata.art and fanart_url:
-				season_metadata.art[fanart_url] = Proxy.Preview(HTTP.Request(fanart_url, sleep=0.5).content, sort_order=1)
-				LogMessage("✅ Added artwork for Season {}: {}".format(season_id, fanart_url))
-
-		LogMessage("🎉 Season metadata update complete!")
-
-	# endregion
-	"""
 
 
 
@@ -381,6 +362,7 @@ class SportsDBAgent(Agent.TV_Shows):
 
 		# region UPDATE STEPS (1) & (2) FILL IN LEAGUE/SHOW METADATA (fanart & team images)
 
+		# Assign league ID
 		league_id = metadata.id
 
 		# Check if the league already has an art (fanart/background)
@@ -398,21 +380,24 @@ class SportsDBAgent(Agent.TV_Shows):
 		else:
 			# UPDATE STEP (2): Get team images
 			self.call_get_team_images(metadata, league_id)
-
+		
 		# endregion
 
 
+		# region STEP (3) ITERATE THROUGH SEASONS AND FETCH POSTERS
 
-		""" TEST
-		# STEP (3): Get season stuff maybe here
-		self.season_stuff(metadata, media, league_id)
-		"""
-
-		# region STEP (4) ITERATE THROUGH SEASONS AND EPISODES
-
-		# Iterate through each season
 		for season_number in media.seasons:
-			# Iterate through each episode
+
+			# Check if the season poster already exists
+			if metadata.seasons[season_number].posters:
+				LogMessage("\n🖼️ Season {} already has a poster.".format(season_number))
+			else:
+				LogMessage("\n📌 Season {} is missing a poster. Fetching...".format(season_number))
+				self.call_get_season_posters(metadata, media, league_id, season_number)
+
+			# endregion
+
+			# region STEP (4) ITERATE THROUGH EPISODES
 			for episode_number in media.seasons[season_number].episodes:
 				episode = metadata.seasons[season_number].episodes[episode_number]
 				episode_media = media.seasons[season_number].episodes[episode_number]

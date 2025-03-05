@@ -84,60 +84,45 @@ def get_team_images(league_id, SPORTSDB_API):
 # endregion
 # LEAGUE LEVEL AND TEAM IMAGE STUFF ##############################################################
 
-
-"""
-# get_seaon_metadata FROM API (WAITING FOR SPORTSDB REPLY) #######################################
+# GET SEASON POSTER FROM API #####################################################################
 # region
 
-def get_season_metadata(league_id, season_id, API_KEY):
-	LogMessage("🔍 Fetching season metadata for League ID: {} and Season ID: {}".format(league_id, season_id))
+def get_season_posters(league_id, SPORTSDB_API):
+	# DELETE #
+	LogMessage("🔍 Fetching season poster for League ID: {}".format(league_id))
 
-	API_BASE_URL_V2 = "https://www.thesportsdb.com/api/v2/json/"  # Ensure this is correct
+	# DELETE THIS define sportsdb_api2 until key is fixed  >< >< >< >< >< >< >< >< >< >< >
+	sportsdb_api2 = "https://www.thesportsdb.com/api/v1/json/3/"
 
-	season_posters_url = "{}list/seasonposters/{}".format(API_BASE_URL_V2, league_id)
-	season_stuff_url = "{}list/seasons/{}".format(API_BASE_URL_V2, league_id)
+	# CHANGE THE sportdb_api2 to SPORTSDB_API when key is sorted >< >< >< >< >< >< >< ><
+	season_posters_url = "{}search_all_seasons.php?id={}&poster=1".format(sportsdb_api2, league_id)
 
-	LogMessage("🗨️ Season Posters API URL: {}".format(season_posters_url))
-	LogMessage("🗨️ Season Stuff API URL: {}".format(season_stuff_url))
+	try:
+		response = urllib2.urlopen(season_posters_url, timeout=10)
+		data = json.load(response)
 
-	headers = {
-		"X-API-KEY": "{}".format(API_KEY),  # Corrected header format for Python 2
-		"Content-Type": "application/json"
-	}
+		if "seasons" not in data or not data["seasons"]:
+			LogMessage("❌ No season posters found for League ID: {}".format(league_id))
+			return {}
 
-	# Function to make an API request using urllib2
-	def make_request(url):
-		try:
-			request = urllib2.Request(url)  # Create request object
-			for key, value in headers.items():
-				request.add_header(key, value)  # Add headers manually
+		# Convert list to dictionary {season_number: poster_url}
+		season_poster_dict = {}
 
-			response = urllib2.urlopen(request, timeout=10)  # Send request
-			data = json.load(response)  # Parse JSON response
+		for season in data["seasons"]:
+			season_number = season.get("strSeason")
+			poster_url = season.get("strPoster")
 
-			LogMessage("DATA RESULTS: {}".format(data))
-			return data
-		except urllib2.HTTPError as e:
-			LogMessage("⚠ HTTP Error: {} - {}".format(e.code, e.reason))
-			return None
-		except urllib2.URLError as e:
-			LogMessage("⚠ URL Error: {}".format(e.reason))
-			return None
-		except Exception as e:
-			LogMessage("⚠ Unexpected Error: {}".format(str(e)))
-			return None
+			if season_number and poster_url:  # Only store seasons with a valid poster
+				season_poster_dict[season_number] = poster_url
 
-	# Fetch season posters
-	data1 = make_request(season_posters_url)
+		LogMessage("✅ Retrieved {} season posters.".format(len(season_poster_dict)))
+		return season_poster_dict  # Return dictionary
 
-	# Fetch season stuff
-	data2 = make_request(season_stuff_url)
-
-	return {"season_posters": data1, "season_stuff": data2}
+	except urllib2.URLError as e:
+		LogMessage("⚠ API Request Error: {}".format(e))
+		return {}
 
 # endregion
-"""
-
 
 # GET EVENT ID STUFF #############################################################################
 # region
@@ -341,10 +326,10 @@ def get_events_on_date(formatted_date, league_id, SPORTSDB_API):
 # region
 
 def get_events_in_round(round_number, league_id, SPORTSDB_API, season_number):
-	# if the season number is 8 characters (########) split with hyphen (####-####)
 
 	LogMessage("🔎 Getting events in round: {} for: {} season: {}".format(round_number, league_id, season_number))
-
+	
+	# if the season number is 8 characters (########) split with hyphen (####-####)
 	if len(str(season_number)) == 8:
 		season_number = season_number[:4] + "-" + season_number[4:]
 
@@ -370,9 +355,6 @@ def get_events_in_round(round_number, league_id, SPORTSDB_API, season_number):
 
 # (4) FIND MATCHING EVENT
 # region
-
-# clean_text HELPER FUNCTION
-# region (4) FIND MATCHING EVENT
 
 # region (4.1) clean_text HELPER FUNCTION
 
@@ -639,6 +621,7 @@ def get_event_id(league_name, season_number, episode_number, episode_path, leagu
 	# endregion
 
 # endregion
+
 # GET EVENT ID STUFF #############################################################################
 
 # endregion
