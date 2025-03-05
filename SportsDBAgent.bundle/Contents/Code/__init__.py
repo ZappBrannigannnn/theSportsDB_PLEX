@@ -233,18 +233,8 @@ class SportsDBAgent(Agent.TV_Shows):
 
 	# endregion
 
-
-
-
-	# (3) region: Fetch & Apply Season Poster
+	# region (3) Fetch All Season Posters for league
 	def call_get_season_posters(self, metadata, media, league_id, season_number):
-
-		# Convert season number if it's 8 characters long (e.g., 20242025 -> 2024-2025)
-		if len(str(season_number)) == 8:
-			season_number_split = season_number[:4] + "-" + season_number[4:]
-		else:
-			season_number_split = str(season_number)  # Keep it unchanged for regular seasons
-
 		LogMessage("🔍 Fetching season posters for League ID: {} | Season: {}".format(league_id, season_number_split))
 
 		# Get season posters from API (Returns dictionary {season_number: poster_url})
@@ -253,9 +243,22 @@ class SportsDBAgent(Agent.TV_Shows):
 		if not season_posters:
 			LogMessage("❌ Something went wrong getting season posters for League ID: {}".format(league_id))
 			return  # Stop if no valid posters are available
+		else:
+			return season_posters
 
 		# DELETE ### Debugging
 		LogMessage("✅ Found season posters for League ID: {}:\n{}".format(league_id, season_posters))
+
+	# endregion
+
+	# region (3) Fetch & Apply Season Poster
+	def apply_season_poster(self, metadata, media, league_id, season_number, season_posters):
+
+		# Convert season number if it's 8 characters long (e.g., 20242025 -> 2024-2025)
+		if len(str(season_number)) == 8:
+			season_number_split = season_number[:4] + "-" + season_number[4:]
+		else:
+			season_number_split = str(season_number)  # Keep it unchanged for regular seasons
 
 		# Find the correct season poster using the formatted season number
 		this_season_poster = season_posters.get(season_number_split)  # Use the converted key
@@ -273,7 +276,7 @@ class SportsDBAgent(Agent.TV_Shows):
 		else:
 			LogMessage("⚠️ Season {} metadata not found, cannot apply poster.".format(season_number))
 
-
+		# endregion
 
 
 
@@ -365,6 +368,9 @@ class SportsDBAgent(Agent.TV_Shows):
 		# Assign league ID
 		league_id = metadata.id
 
+		# STEP (3) (ALL SEASON POSTERS FOR LEAGUE ONCE) Call get_season_posters for the league from the API #################
+		season_posters = get_season_posters(league_id, SPORTSDB_API)
+
 		# Check if the league already has an art (fanart/background)
 		if metadata.art:
 			LogMessage("🖼️ League ID {} already has art applied: {}".format(
@@ -383,17 +389,16 @@ class SportsDBAgent(Agent.TV_Shows):
 		
 		# endregion
 
-
 		# region STEP (3) ITERATE THROUGH SEASONS AND FETCH POSTERS
 
 		for season_number in media.seasons:
 
 			# Check if the season poster already exists
 			if metadata.seasons[season_number].posters:
-				LogMessage("\n🖼️ Season {} already has a poster.".format(season_number))
+				LogMessage("🖼️ Season {} already has a poster.".format(season_number))
 			else:
-				LogMessage("\n📌 Season {} is missing a poster. Fetching...".format(season_number))
-				self.call_get_season_posters(metadata, media, league_id, season_number)
+				LogMessage("📌 Season {} is missing a poster. Fetching from season data grabbed already...".format(season_number))
+				self.apply_season_poster(metadata, media, league_id, season_number, season_posters)
 
 			# endregion
 
