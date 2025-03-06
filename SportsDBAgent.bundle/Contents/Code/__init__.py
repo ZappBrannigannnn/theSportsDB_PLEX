@@ -178,8 +178,7 @@ class SportsDBAgent(Agent.TV_Shows):
 
 	# region UPDATE FUNCTION / LEAGUE METADATA / EPISODE EVERYTHING #####################################
 
-	# (1) call_get_league_info (CALLED BY UPDATE)
-	# region
+	# region (1) call_get_league_info (CALLED BY UPDATE)
 	def call_get_league_info(self, metadata, league_id):
 
 		league_metadata = get_league_info(league_id, SPORTSDB_API)
@@ -278,12 +277,7 @@ class SportsDBAgent(Agent.TV_Shows):
 
 		# endregion
 
-
-
-
-	# (5) Get the event id
-	# region
-
+	# region (5) Get the event id
 	def call_get_event_id(self, season_number, episode_number, episode_path, league_id):
 
 		league_name = os.path.basename(os.path.dirname(os.path.dirname(episode_path)))
@@ -291,26 +285,20 @@ class SportsDBAgent(Agent.TV_Shows):
 		event_id = get_event_id(league_name, season_number, episode_number, episode_path, league_id, SPORTSDB_API)
 		
 		return event_id
-
 	# endregion
 
-	# (6) Get event metadata
-	# region
-
+	# region (6) Get event metadata
 	def call_get_event_metadata(self, event_id):
 		
 		event_metadata = get_event_info(SPORTSDB_API, event_id)
 
 		return event_metadata
-
 	# endregion
 
-	# (7) UPDATE EPISODE METADATA
-	# region
-
+	# region (7) UPDATE EPISODE METADATA
 	def update_episode_metadata(self, metadata, media, event_metadata, episode, season_number, episode_number, episode_path):
 
-		# Extract metadata safely with fallback values
+		# region Pull specific metadatas from event_metadata
 		eventtitle = event_metadata.get('strEvent', 'Unknown Event') or 'Unknown Event'
 		summary = event_metadata.get('strDescriptionEN', 'No SportsDBdescription available.') or 'No SportsDB description available.'
 		date = event_metadata.get('dateEvent', '') or ''
@@ -324,13 +312,13 @@ class SportsDBAgent(Agent.TV_Shows):
 		country = event_metadata.get('strCountry', 'Unknown Country') or 'Unknown Country'
 
 		thumb = event_metadata.get('strThumb', '') or ''
-
 		fanart = event_metadata.get('strFanart', '') or ''
 
 		# Format summary
 		my_summary = ("Round {} {}\n{} in {},{}\n{} in attendance\n{}".format(round_num, date, venue, city, country, spectators, summary))
+		# endregion
 
-		# Assign metadata
+		# region Assign metadata
 		episode.title = ("Round {} {}".format(round_num, eventtitle))
 		episode.summary = my_summary
 
@@ -355,7 +343,8 @@ class SportsDBAgent(Agent.TV_Shows):
 				LogMessage("❌ ERROR: Failed to assign fanart: {}".format(e))
 
 		#LogMessage("✅ Successfully updated metadata for: {} - S{}E{}".format(eventtitle, season_number, episode_number))
-
+		# endregion
+		
 	# endregion
 
 	# region UPDATE FUNCTION

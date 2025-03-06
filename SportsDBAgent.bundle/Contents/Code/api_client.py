@@ -1,6 +1,4 @@
-# IMPORTS ########################################################################################
-# region
-
+# region IMPORTS ########################################################################################
 import re
 import urllib2
 import json
@@ -11,12 +9,9 @@ from dateutil import parser
 from functools import reduce
 from difflib import SequenceMatcher
 import io
-
 # endregion
 
-# LOGGING ########################################################################################
-# region
-
+# region LOGGING ########################################################################################
 def LogMessage(dbgline):
 	timestamp = time.strftime("%H:%M:%S - ")
 
@@ -24,15 +19,11 @@ def LogMessage(dbgline):
 		Log.Debug("{}{}".format(timestamp, dbgline))  # Correct Plex logging
 	except NameError:
 		print("❌ Log object is not available. Running in a non-Plex environment.")
-
 # endregion
 
-# LEAGUE LEVEL AND TEAM IMAGE STUFF ##############################################################
-# region
+# region LEAGUE LEVEL AND TEAM IMAGE STUFF ##############################################################
 
-# get_league_info FROM API #######################################################################
-# region
-
+# region get_league_info FROM API #######################################################################
 def get_league_info(league_id, SPORTSDB_API):
 	league_info_url = "{}/lookupleague.php?id={}".format(SPORTSDB_API, league_id)
 
@@ -53,12 +44,9 @@ def get_league_info(league_id, SPORTSDB_API):
 	except urllib2.URLError as e:
 		LogMessage("⚠ API Request Error: {}".format(e))
 		return None
-
 # endregion
 
-# get_team_images FROM API #######################################################################
-# region
-
+# region get_team_images FROM API #######################################################################
 def get_team_images(league_id, SPORTSDB_API):
 	team_images_url = "{}/lookup_all_teams.php?id={}".format(SPORTSDB_API, league_id)
 
@@ -78,24 +66,16 @@ def get_team_images(league_id, SPORTSDB_API):
 	except urllib2.URLError as e:
 		LogMessage("⚠ API Request Error: {}".format(e))
 		return None
-	
 # endregion
 
 # endregion
-# LEAGUE LEVEL AND TEAM IMAGE STUFF ##############################################################
 
-# GET SEASON POSTER FROM API #####################################################################
-# region
-
+# region GET SEASON POSTER FROM API #####################################################################
 def get_season_posters(league_id, SPORTSDB_API):
-	# DELETE #
-	LogMessage("🔍 Fetching season poster for League ID: {}".format(league_id))
 
-	# DELETE THIS define sportsdb_api2 until key is fixed  >< >< >< >< >< >< >< >< >< >< >
-	sportsdb_api2 = "https://www.thesportsdb.com/api/v1/json/3/"
+	season_posters_url = ("{}/search_all_seasons.php?id={}&poster=1".format(SPORTSDB_API, league_id))
 
-	# CHANGE THE sportdb_api2 to SPORTSDB_API when key is sorted >< >< >< >< >< >< >< ><
-	season_posters_url = "{}search_all_seasons.php?id={}&poster=1".format(sportsdb_api2, league_id)
+	# https://www.thesportsdb.com/api/v1/json/98752398/search_all_seasons.php?id=4328&poster=1
 
 	try:
 		response = urllib2.urlopen(season_posters_url, timeout=10)
@@ -115,7 +95,6 @@ def get_season_posters(league_id, SPORTSDB_API):
 			if season_number and poster_url:  # Only store seasons with a valid poster
 				season_poster_dict[season_number] = poster_url
 
-		LogMessage("✅ Retrieved {} season posters.".format(len(season_poster_dict)))
 		return season_poster_dict  # Return dictionary
 
 	except urllib2.URLError as e:
@@ -124,11 +103,9 @@ def get_season_posters(league_id, SPORTSDB_API):
 
 # endregion
 
-# GET EVENT ID STUFF #############################################################################
-# region
+# region GET EVENT ID STUFF #############################################################################
 
-# (1) Get DATE from filename
-# region
+# region (1) Get DATE from filename
 
 def extract_date_from_filename(filename):
 	# Match common date formats
@@ -183,8 +160,7 @@ def extract_date_from_filename(filename):
 
 # endregion
 
-# (2) Get ROUND from filename
-# region
+# region (2) Get ROUND from filename
 def extract_round_from_filename(filename, league_name):
 	# Extracts the round number from a filename, checking standard patterns first and falling back to a JSON file for special cases.
 
@@ -298,9 +274,7 @@ def extract_round_from_filename(filename, league_name):
 
 	# endregion
 
-# (3) Get LEAGUE's events on the specific DATE
-# region
-
+# region (3) Get LEAGUE's events on the specific DATE
 def get_events_on_date(formatted_date, league_id, SPORTSDB_API):
 	events_on_date_url = "{}/eventsday.php?d={}&l={}".format(SPORTSDB_API, formatted_date, league_id)
 
@@ -322,9 +296,7 @@ def get_events_on_date(formatted_date, league_id, SPORTSDB_API):
 
 # endregion
 
-# (3) Get LEAGUE's events in a specific ROUND
-# region
-
+# region (3) Get LEAGUE's events in a specific ROUND
 def get_events_in_round(round_number, league_id, SPORTSDB_API, season_number):
 
 	LogMessage("🔎 Getting events in round: {} for: {} season: {}".format(round_number, league_id, season_number))
@@ -353,8 +325,7 @@ def get_events_in_round(round_number, league_id, SPORTSDB_API, season_number):
 
 # endregion
 
-# (4) FIND MATCHING EVENT
-# region
+# region (4) FIND MATCHING EVENT
 
 # region (4.1) clean_text HELPER FUNCTION
 
@@ -561,27 +532,24 @@ def find_matching_event(league_name, filename, event_date_round_data):
 
 # endregion
 
-# get_event_id function START
-# region
+# endregion
 
+# >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< #
+
+# region get_event_id function START
 def get_event_id(league_name, season_number, episode_number, episode_path, league_id, SPORTSDB_API):
 	# Initialize event_id
 	event_id = None
 
 	# endregion
 
-	# (1) Get DATE from filename
-	# region
-
+	# region (1) Get DATE from filename
 	filename = os.path.basename(episode_path)
 	formatted_date = extract_date_from_filename(filename)
 	# LogMessage("🗨️ FORMATTED DATE: {} For Episode: {}".format(formatted_date, episode_path))
-
 	# endregion
 
-	# (2) Get ROUND if no DATE from filename
-	# region
-
+	# region (2) Get ROUND if no DATE from filename
 	if formatted_date is None:
 		round_number = extract_round_from_filename(filename, league_name)
 		# LogMessage("🗨️ ROUND NUMBER: {}".format(round_number))
@@ -592,9 +560,7 @@ def get_event_id(league_name, season_number, episode_number, episode_path, leagu
 
 			# endregion
 
-		# (3) Get EVENTS in ROUND or DATE
-		# region
-
+		# region (3) Get EVENTS in ROUND or DATE
 		else:
 			event_date_round_data = get_events_in_round(round_number, league_id, SPORTSDB_API, season_number)
 	else:
@@ -604,12 +570,9 @@ def get_event_id(league_name, season_number, episode_number, episode_path, leagu
 	if event_date_round_data is None:
 		LogMessage("❌ No events found for date: {}".format(formatted_date))
 		return None
-
 		# endregion
 
-	# (4) Get event ID by matching the filename against the event_date_round_data
-	# region
-
+	# region 4) Get event ID by matching the filename against the event_date_round_data
 	event_id = find_matching_event(league_name, filename, event_date_round_data)
 
 	if event_id is None:
@@ -622,13 +585,7 @@ def get_event_id(league_name, season_number, episode_number, episode_path, leagu
 
 # endregion
 
-# GET EVENT ID STUFF #############################################################################
-
-# endregion
-
-# get_event_info FROM API ########################################################################
-# region
-
+# region GET EVENT INFO FROM API ########################################################################
 def get_event_info(SPORTSDB_API, event_id):
 	
 	event_info_url = "{}/lookupevent.php?id={}".format(SPORTSDB_API, event_id)
@@ -654,5 +611,4 @@ def get_event_info(SPORTSDB_API, event_id):
 	except urllib2.URLError as e:
 		LogMessage("⚠ API Request Error: {}".format(e))
 		return None
-
 # endregion
