@@ -86,14 +86,19 @@ class SportsDBAgent(Agent.TV_Shows):
 		# region STEP 1: Fetch the league ID from the JSON file
 
 		# region GET THE LEAGUE MAP LOCATION
+		if os.name == 'nt':  # Windows
+			base_dir = os.getenv('LOCALAPPDATA')
+		else:  # Linux/Debian
+			base_dir = os.getenv('XDG_CONFIG_HOME', os.path.expanduser("~/.config"))
+
 		plex_plugin_data_dir = os.path.join(
-			os.getenv('LOCALAPPDATA'),  # AppData\Local on Windows
+			base_dir,
 			'Plex Media Server',
 			'Plug-in Support',
 			'Data',
-			'com.plexapp.agents.SportsDBAgent',  # Replace with your plugin name
+			'com.plexapp.agents.SportsDBAgent',
 			'DataItems'
-	)
+		)
 
 		# Define the path to the JSON file
 		league_map_path = os.path.join(plex_plugin_data_dir, "SportsDB_League_Map.json")

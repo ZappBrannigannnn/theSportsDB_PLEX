@@ -228,7 +228,19 @@ def extract_round_from_filename(filename, league_name):
 	LogMessage("►► No numeric round found in filename: {}".format(filename))
 
 	# If no numeric round was found, check the special cases from JSON
-	json_filepath = "C:/Users/mjc_c/AppData/Local/Plex Media Server/Scanners/Series/SpecialRoundsMap.json"
+
+	if os.name == 'nt':  # Windows
+		json_filepath = os.path.join(os.getenv('LOCALAPPDATA'),
+									"Plex Media Server",
+									"Scanners", "Series",
+									"SpecialRoundsMap.json")
+	else:  # Debian/Linux
+		base_dir = os.getenv('XDG_CONFIG_HOME') or os.path.expanduser("~/.config")
+		json_filepath = os.path.join(base_dir,
+								"Plex Media Server",
+								"Scanners",
+								"Series",
+								"SpecialRoundsMap.json")
 
 	if not os.path.exists(json_filepath):
 		LogMessage("►► JSON file not found: {}".format(json_filepath))
