@@ -30,7 +30,12 @@ def get_league_id(league_name, SPORTSDB_API):
 	try:
 		response = requests.get(league_list_url, verify=certifi.where(), timeout=10)
 		response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
-		data = response.json()
+		try:
+			data = response.json()
+		except (AttributeError, ValueError):  # Handle missing `.json()` or invalid JSON
+			data = json.loads(response.text or '{}')  # Ensure it's always a dict
+
+
 
 		if "leagues" in data:
 			for league in data["leagues"]:
@@ -40,7 +45,8 @@ def get_league_id(league_name, SPORTSDB_API):
 					break  # Stop loop once the league is found
 
 	except requests.exceptions.HTTPError as e:
-		LogMessage("⚠ HTTP Error (1): {} - {}".format(e.response.status_code, e.message))
+		LogMessage("⚠ HTTP Error (1): {} - {}".format(e.response.status_code, str(e)))
+
 		return None
 	except requests.exceptions.RequestException as e:
 		LogMessage("⚠ URL Error (1): {}".format(str(e)))
@@ -193,7 +199,19 @@ def extract_round_from_filename(filename, league_name):
 	LogMessage("►► No numeric round found in filename: {}".format(filename))
 
 	# If no numeric round was found, check the special cases from JSON
-	json_filepath = "C:/Users/mjc_c/AppData/Local/Plex Media Server/Scanners/Series/SpecialRoundsMap.json"
+	if os.name == 'nt':  # Windows
+		json_filepath = os.path.join(os.getenv('LOCALAPPDATA'),
+									"Plex Media Server",
+									"Scanners", "Series",
+									"SpecialRoundsMap.json")
+	else:  # Debian/Linux
+
+		config_home = os.getenv('XDG_CONFIG_HOME') or os.path.expanduser("~/.config")
+		json_filepath = os.path.join(config_home,
+									"Plex Media Server",
+									"Scanners",
+									"Series",
+									"SpecialRoundsMap.json")
 
 	if not os.path.exists(json_filepath):
 		LogMessage("►► JSON file not found: {}".format(json_filepath))
@@ -246,7 +264,10 @@ def get_events_on_date(formatted_date, league_id, SPORTSDB_API):
 	try:
 		response = requests.get(events_on_date_url, verify=certifi.where(), timeout=10)
 		response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
-		event_date_data = response.json()
+		try:
+			event_date_data = response.json()
+		except AttributeError:  # Python 2 fallback
+			event_date_data = json.loads(response.text)
 
 		if "events" in event_date_data and event_date_data["events"]:
 			#LogMessage("✅ Retrieved {} events for: {}".format(formatted_date, league_id))
@@ -274,7 +295,11 @@ def get_events_in_round(league_id, season_name, round_number, SPORTSDB_API):
 	try:
 		response = requests.get(events_in_round_url, verify=certifi.where(), timeout=10)
 		response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
-		event_round_data = response.json()
+		try:
+			event_round_data = response.json()
+		except (AttributeError, ValueError):  # Handle missing `.json()` or invalid JSON
+			event_round_data = json.loads(response.text or '{}')  # Ensure it's always a dict
+
 
 		if "events" in event_round_data and event_round_data["events"]:
 			#LogMessage("✅ Retrieved ROUND {} events For: {} season: {}".format(round_number, league_id, season_name))
@@ -513,7 +538,7 @@ def find_matching_event(league_name, filename, event_date_round_data):
 
 def get_event_order_number(event_date_data, event_id):
 	# Sort events by 'strTimestamp' in ascending order
-	sorted_events = sorted(event_date_data, key=lambda x: x.get("strTimestamp", ""), reverse=False)
+	sorted_events = sorted(event_date_data, key=lambda x: x.get("strTimestamp", "") or "0000-00-00 00:00:00", reverse=False)
 
 	# Find the position of the event_id after sorting
 	for index, event in enumerate(sorted_events, start=1):  # 1-based index
