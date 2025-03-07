@@ -81,17 +81,27 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 	# region GET LEAGUE ID FROM JSON OR API CLIENT
 
 	# Get the Plex plugin data directory
+	if os.name == 'nt':  # Windows
+		base_dir = os.getenv('LOCALAPPDATA', os.path.expanduser("~"))
+	else:  # Linux/Debian
+		base_dir = os.getenv('XDG_CONFIG_HOME') or os.path.expanduser("~/.config")
+
 	plex_plugin_data_dir = os.path.join(
-		os.getenv('LOCALAPPDATA'),  # AppData\Local on Windows
+		base_dir,
 		'Plex Media Server',
 		'Plug-in Support',
 		'Data',
-		'com.plexapp.agents.SportsDBAgent',  # Replace with your plugin name
+		'com.plexapp.agents.SportsDBAgent',
 		'DataItems'
 	)
 
+	# Create the Plex plugin data directory if it doesn't exist
 	if not os.path.exists(plex_plugin_data_dir):
-		os.makedirs(plex_plugin_data_dir)
+		try:
+			os.makedirs(plex_plugin_data_dir)
+		except OSError as e:
+			if not os.path.isdir(plex_plugin_data_dir):  # Ensure another process didn't create it
+				raise
 
 	# Define the league ID map file path and create if it doesn't exist
 	league_id_map_file = os.path.join(plex_plugin_data_dir, "SportsDB_League_Map.json")

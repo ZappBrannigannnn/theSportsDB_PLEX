@@ -39,11 +39,11 @@ def get_league_id(league_name, SPORTSDB_API):
 					#LogMessage("✅ Found League ID: {}".format(league_id))
 					break  # Stop loop once the league is found
 
-	except urllib3.exceptions.HTTPError as e:
-		LogMessage("⚠ HTTP Error (1): {} - {}".format(e.code, e.reason))
+	except requests.exceptions.HTTPError as e:
+		LogMessage("⚠ HTTP Error (1): {} - {}".format(e.response.status_code, e.message))
 		return None
-	except urllib3.exceptions.RequestError as e:
-		LogMessage("⚠ URL Error (1): {}".format(e.reason))
+	except requests.exceptions.RequestException as e:
+		LogMessage("⚠ URL Error (1): {}".format(str(e)))
 		return None
 	except ValueError:
 		LogMessage("🚨 ERROR: Invalid JSON response from API (1)")
@@ -256,9 +256,9 @@ def get_events_on_date(formatted_date, league_id, SPORTSDB_API):
 			LogMessage("❌ No events found for date: {}".format(formatted_date))
 			return None
 
-	except urllib2.URLError as e:
-		LogMessage("⚠ API Request Error: {}".format(e))
-		return None
+	except requests.exceptions.RequestException as e:
+		LogMessage("❌ API Request Error (1): {}".format(e))
+		return []
 
 # endregion
 
@@ -285,7 +285,7 @@ def get_events_in_round(league_id, season_name, round_number, SPORTSDB_API):
 			return []
 
 	except requests.exceptions.RequestException as e:
-		LogMessage("❌ API Request Error: {}".format(e))
+		LogMessage("❌ API Request Error (2): {}".format(e))
 		return []
 
 # endregion
