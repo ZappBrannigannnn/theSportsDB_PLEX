@@ -69,7 +69,9 @@ TO INCLUDE THE ROUND OR DATE AS IT IS IN theSportsDB.com
 16.	TheSportsDB uses different round numbers for special games.
 	a)	To add special case round mappings add them to the "C:\USER\AppData\Local\Plex Media Server\Scanners\Series\SpecialRoundsMap.json"
 	b)	Be sure the maintain the proper format and dont use tabs only spaces.
-	
+
+17. ***REMEMBER***: There is an API limit of 100 requests per minute. You will get a 429 error if exceeded. This may require you to add your collection a few items at a time.
+
 #######################################################################################################################################################################
 
 The SCANNER works by:

@@ -554,10 +554,12 @@ def get_event_order_number(event_date_data, event_id):
 # region get_event_id initialize
 def get_event_id(league_name, league_id, season_name, filename, SPORTSDB_API):
 	LogMessage("🔍 Getting event ID from API for: {}".format(filename))
+	
 	# Initialize event_id and event data placeholders
 	event_id = None
 	event_date_data = None
 	event_round_data = None
+	round_number = None
 	# endregion
 
 	# region (^1^) Get DATE from filename
@@ -605,19 +607,19 @@ def get_event_id(league_name, league_id, season_name, filename, SPORTSDB_API):
 	# Ensure there's event data before calling find_matching_event
 	if not event_date_round_data:
 		LogMessage("❌ No event data available for matching: {}".format(filename))
-		return None  # Prevents calling `find_matching_event` with None
+		return None, None, None, None  # Prevents calling `find_matching_event` with None
 
 	event_match = find_matching_event(league_name, filename, event_date_round_data)
 
 	if event_match is None:
 		LogMessage("❌ No matching events found for filename: {}".format(filename))
-		return None
+		return None, None, None, None
 
 	event_id, event_title, event_date = event_match
 
 	if event_id is None:
 		LogMessage("❌ No matching events found for filename: {}".format(filename))
-		return None
+		return None, None, None, None
 
 	# endregion
 
