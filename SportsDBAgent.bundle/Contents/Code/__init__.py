@@ -265,7 +265,9 @@ class SportsDBAgent(Agent.TV_Shows):
 			season_number_split = str(season_number)  # Keep it unchanged for regular seasons
 
 		# Find the correct season poster using the formatted season number
-		this_season_poster = season_posters.get(season_number_split)  # Use the converted key
+		#####
+		LogMessage("🔍 season_posters {}...".format(season_posters))
+		this_season_poster = season_posters.get(season_number_split)  # Use the proper season number
 
 		if not this_season_poster:
 			LogMessage("❌ No valid poster found for Season {}.".format(season_number))

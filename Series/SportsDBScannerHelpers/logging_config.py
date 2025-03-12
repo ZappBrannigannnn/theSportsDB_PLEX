@@ -15,10 +15,9 @@ if os.name == 'nt':  # Windows
         'SportsDBScanner.log'
     )
 
-else:  # Linux/Debian
+else:  # Linux/Debian 
     #base_dir = os.getenv('XDG_CONFIG_HOME', os.path.expanduser("~/.config")) ############################
     base_dir = "/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Logs"
-
 
     # Define log file location
     log_file = os.path.join(
@@ -32,7 +31,7 @@ if not os.path.exists(log_dir):
     try:
         os.makedirs(log_dir)
     except OSError as e:
-        if not os.path.isdir(log_dir):  # Prevents race condition errors
+        if not os.path.isdir(log_dir):
             raise
 
 # Configure logging

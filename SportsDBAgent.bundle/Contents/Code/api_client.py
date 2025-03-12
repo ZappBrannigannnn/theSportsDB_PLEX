@@ -193,6 +193,7 @@ def extract_round_from_filename(filename, league_name):
 		r"MW_(\d+)",    # MW_10
 		r"MW\.(\d+)",   # MW.10
 		r"MW(\d+)",     # MW10
+		r"M(\d+)",      # M10
 
 		r"Week (\d+)",  # Week 3
 		r"Week-(\d+)",  # Week-3

@@ -42,9 +42,9 @@ def get_league_id(league_name, SPORTSDB_API):
 					#LogMessage("✅ Found League ID: {}".format(league_id))
 					break  # Stop loop once the league is found
 
+
 	except requests.exceptions.HTTPError as e:
 		LogMessage("⚠ HTTP Error (1): {} - {}".format(e.response.status_code, str(e)))
-
 		return None
 	except requests.exceptions.RequestException as e:
 		LogMessage("⚠ URL Error (1): {}".format(str(e)))
@@ -162,6 +162,7 @@ def extract_round_from_filename(filename, league_name):
 		r"MW_(\d+)",    		# MW_10
 		r"MW\.(\d+)",   		# MW.10
 		r"MW(\d+)",     		# MW10
+		r"M(\d+)",      		# M10
 
 		r"Week (\d+)",  		# Week 3
 		r"Week-(\d+)",  		# Week-3
