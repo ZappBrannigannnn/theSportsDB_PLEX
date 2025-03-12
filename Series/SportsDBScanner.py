@@ -92,7 +92,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 	if os.name == 'nt':  # Windows
 		base_dir = os.getenv('LOCALAPPDATA', os.path.expanduser("~"))
 	else:  # Linux/Debian
-		base_dir = os.getenv('XDG_CONFIG_HOME') or os.path.expanduser("~/.config")
+	    base_dir = "/var/lib/plexmediaserver/Library/Application Support"
 
 	plex_plugin_data_dir = os.path.join(
 		base_dir,

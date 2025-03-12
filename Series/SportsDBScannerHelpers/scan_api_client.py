@@ -205,7 +205,7 @@ def extract_round_from_filename(filename, league_name):
 									"SpecialRoundsMap.json")
 	else:  # Debian/Linux
 
-		config_home = os.getenv('XDG_CONFIG_HOME') or os.path.expanduser("~/.config")
+		config_home = "/var/lib/plexmediaserver/Library/Application Support"
 		json_filepath = os.path.join(config_home,
 									"Plex Media Server",
 									"Scanners",

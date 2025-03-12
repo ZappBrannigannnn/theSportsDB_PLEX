@@ -89,8 +89,8 @@ class SportsDBAgent(Agent.TV_Shows):
 		if os.name == 'nt':  # Windows
 			base_dir = os.getenv('LOCALAPPDATA')
 		else:  # Linux/Debian
-			base_dir = os.getenv('XDG_CONFIG_HOME', os.path.expanduser("~/.config"))
-
+			base_dir = "/var/lib/plexmediaserver/Library/Application Support"
+			
 		plex_plugin_data_dir = os.path.join(
 			base_dir,
 			'Plex Media Server',
