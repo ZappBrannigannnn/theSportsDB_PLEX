@@ -35,8 +35,6 @@ def get_league_id(league_name, SPORTSDB_API):
 		except (AttributeError, ValueError):  # Handle missing `.json()` or invalid JSON
 			data = json.loads(response.text or '{}')  # Ensure it's always a dict
 
-
-
 		if "leagues" in data:
 			for league in data["leagues"]:
 				if league["strLeague"].lower() == league_name.lower():

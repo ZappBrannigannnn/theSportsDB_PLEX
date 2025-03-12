@@ -6,16 +6,25 @@ from logging.handlers import RotatingFileHandler
 # Set correct base directory
 if os.name == 'nt':  # Windows
     base_dir = os.getenv('LOCALAPPDATA', os.path.expanduser("~"))
-else:  # Linux/Debian
-    base_dir = os.getenv('XDG_CONFIG_HOME', os.path.expanduser("~/.config"))
 
-# Define log file location
-log_file = os.path.join(
-    base_dir,
-    'Plex Media Server',
-    'Logs',
-    'SportsDBScanner.log'
-)
+    # Define log file location
+    log_file = os.path.join(
+        base_dir,
+        'Plex Media Server',
+        'Logs',
+        'SportsDBScanner.log'
+    )
+
+else:  # Linux/Debian
+    #base_dir = os.getenv('XDG_CONFIG_HOME', os.path.expanduser("~/.config")) ############################
+    base_dir = "/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Logs"
+
+
+    # Define log file location
+    log_file = os.path.join(
+        base_dir,
+        'SportsDBScanner.log'
+    )
 
 # Ensure log directory exists
 log_dir = os.path.dirname(log_file)
