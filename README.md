@@ -64,12 +64,6 @@ FILE NAMING
 
 "E:\SPORTS\English Premier League\2023-2024\Soccer Premier League Manchester City Arsenal 31 03 2024 1080p25.mp4"
 
-THESE ONES WORKED BECAUSE THEY WERE THE ONLY ONES ON THE SPECIFIC DATE:
-"E:\SPORTS\English Premier League\2022-2023\20230811_EPL_23.24_R.01_BUR_vs_MCI_[rgfootball.net]_720p.50_STU.mp4"
-
-"E:\SPORTS\English Premier League\2023-2024\20240816_EPL_24.25_R.01_MUN_vs_FUL_[rgfootball.net]_720p.25.mp4"
-
-
 "E:\SPORTS\Formula 1\2023\Formula 1 2023 Round 01 BahrainGP Practice 1 F1 Live 1080p.mp4"
 
 "E:\SPORTS\Formula 1\2023\Formula 1 2023 Round 01 BahrainGP Practice 3 F1 Live 1080p.mp4"
@@ -79,6 +73,13 @@ THESE ONES WORKED BECAUSE THEY WERE THE ONLY ONES ON THE SPECIFIC DATE:
 "E:\SPORTS\Formula 1\2023\Formula.1.2023.Round.02.SaudiArabianGP.Practice.2.F1.Live.1080p.mp4"
 
 "E:\SPORTS\Formula 1\2023\Formula.1.2023.Round.03.AustralianGP.Qualifying.F1.Live.720p.mp4"
+
+
+#THESE ONES WORKED BECAUSE THEY WERE THE ONLY ONES ON THE SPECIFIC DATE:
+"E:\SPORTS\English Premier League\2022-2023\20230811_EPL_23.24_R.01_BUR_vs_MCI_[rgfootball.net]_720p.50_STU.mp4"
+
+"E:\SPORTS\English Premier League\2023-2024\20240816_EPL_24.25_R.01_MUN_vs_FUL_[rgfootball.net]_720p.25.mp4"
+
 
 THESE FILENAMES DID HAVE TO ALTERED FROM THIS:
 "E:\SPORTS\ATP World Tour\2023\Wimbledon 2023.Final.Carlos Alcaraz - Novak Djokovic.mp4"
