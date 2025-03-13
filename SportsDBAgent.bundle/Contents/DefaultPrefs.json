@@ -1,29 +1,5 @@
 [
     {
-      "id": "INSTRUCTIONS",
-      "label": "The SportsDBAgent INSTRUCTIONS",
-      "type": "enum",
-      "values": [
-        "1. This agent is for use with the SportsDBScanner",
-        "2. In the SCANNERS/SERIES folder, enter your API KEY in the",
-        "--> YourSportsDB_API_KEY.json file",
-        "3. Your API KEY must aslo be entered below for the AGENT.",
-        "4. In your LIBRARY (SPORTS) folder place your LEAGUE folders.",
-        "5. They must be named exactly as the league in thesportsdb.com.",
-        "6. In your league folders, place the SEASON folders.",
-        "7. They must be named exactly as the seasons in thesportsdb.com.",
-        "8. In the season folders, place your match video files.",
-        "9. The agent was deisgned so you wouldn't have to rename downloaded video files.",
-        "-- But there are some requirements.",
-        "-- The files must contain:",
-        "------> A) Either a date or a round number",
-        "------> B) The teams involved (doesn't have to be the full length name)",
-        "10. Examples of filenames and the folder structure of what this SCANNER",
-        "--- and AGENT were tested on can be found in the",
-        "--- SCANNERS/SERIES/SportsDBPlexInstructions.txt file."
-      ]
-    },
-    {
       "id": "theSportsDBAPIKey",
       "label": "What is your TheSportsDB API key?",
       "type": "text",

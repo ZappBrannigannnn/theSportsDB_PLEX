@@ -4,11 +4,44 @@
 <dict>
 	<key>CFBundleIdentifier</key>
 	<string>com.plexapp.agents.sportsdbagent</string>
+
 	<key>PlexAgentAttributionText</key>
+	<string>
+		THIS AGENT IS FOR USE WITH THE SPORTSDBSCANNER&lt;br/&gt;&lt;br/&gt;
+		REMEMBER: There is an API limit of 100 requests per minute. You will get a 429 error if exceeded. This may require you to add your collection a few items at a time.&lt;br/&gt;&lt;br/&gt;
+		INSTALLATION&lt;br/&gt;
+		1. Place the "Series" folder in your "\Plex Media Server\Scanners" folder&lt;br/&gt;
+		2. Place the "SportsDBAgent.bundle" folder in your "\Plex Media Server\Plug-ins" folder&lt;br/&gt;
+		3. In the SCANNERS/SERIES/YourSportsDB_API_KEY.json file, enter your API KEY&lt;br/&gt;&lt;br/&gt;
+		IN PLEX&lt;br/&gt;
+		1. Create your new sports library as a TV Show&lt;br/&gt;
+		2. Select SportsDBAgent as the agent.&lt;br/&gt;
+		3. Select SportsDBScanner as the scanner (might be selected automatically when SportsDBAgent is selected)&lt;br/&gt;
+		4. Enter your API KEY in the AGENT settings or in Advanced library settings.&lt;br/&gt;&lt;br/&gt;
+		FOLDER STRUCTURE&lt;br/&gt;
+		1. Your library folder can be called whatever you want (usually "SPORTS")&lt;br/&gt;
+		2. In your LIBRARY folder place your LEAGUE folders&lt;br/&gt;
+		3. LEAGUE folders must be named exactly as the league in thesportsdb.com&lt;br/&gt;
+		4. In your LEAGUE folders, place the SEASON folders&lt;br/&gt;
+		5. SEASON folders must be named exactly as the seasons in thesportsdb.com&lt;br/&gt;
+		6. In the season folders, place your match video files&lt;br/&gt;&lt;br/&gt;
+		FILE NAMING&lt;br/&gt;
+		The agent was designed so you wouldn't have to rename video files. But there are some requirements.&lt;br/&gt;
+		The files must contain:&lt;br/&gt;
+		A) Either a date or a round number&lt;br/&gt;
+			- DATE IS PREFERRED AS IT RETURNS FEWER RESULTS TO MATCH AGAINST&lt;br/&gt;
+			- ROUND NUMBERS CAN COME IN DIFFERENT PATTERNS&lt;br/&gt;
+			- IF A FILENAME HAS BOTH, THE DATE WILL BE USED&lt;br/&gt;
+		B) The teams involved (doesn't have to be the full-length name, but definitely their unique words.)&lt;br/&gt;&lt;br/&gt;
+		EXAMPLES OF FILENAMES AND THE FOLDER STRUCTURE OF WHAT THIS SCANNER AND AGENT WERE TESTED ON CAN BE FOUND IN THE README FILE.
+	</string>
+
 	<key>PlexFrameworkVersion</key>
 	<string>2</string>
+
 	<key>PlexPluginClass</key>
 	<string>Agent</string>
+
 	<key>PlexPluginCodePolicy</key>
 	<string>Elevated</string>
 </dict>
