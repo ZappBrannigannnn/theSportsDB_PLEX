@@ -195,7 +195,7 @@ def extract_round_from_filename(filename, league_name):
 			except ValueError:
 				continue  # Skip any incorrect matches
 
-	LogMessage("►► No numeric round found in filename: {}".format(filename))
+	LogMessage("►► No ROUND found in filename: {}".format(filename))
 
 	# If no numeric round was found, check the special cases from JSON
 	if os.name == 'nt':  # Windows

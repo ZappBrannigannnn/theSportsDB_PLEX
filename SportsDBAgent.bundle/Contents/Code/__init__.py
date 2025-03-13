@@ -20,6 +20,12 @@ API_KEY = ""  # API Key will be set at startup
 API_BASE_URL = "https://www.thesportsdb.com/api/v1/json/"
 SPORTSDB_API = ""
 
+base_dir = ""
+if os.name == 'nt':  # Windows
+	base_dir = os.getenv('LOCALAPPDATA')
+else:  # Linux/Debian
+	base_dir = "/var/lib/plexmediaserver/Library/Application Support"
+
 # endregion
 
 # region LOGGING ########################################################################################
@@ -86,11 +92,6 @@ class SportsDBAgent(Agent.TV_Shows):
 		# region STEP 1: Fetch the league ID from the JSON file
 
 		# region GET THE LEAGUE MAP LOCATION
-		if os.name == 'nt':  # Windows
-			base_dir = os.getenv('LOCALAPPDATA')
-		else:  # Linux/Debian
-			base_dir = "/var/lib/plexmediaserver/Library/Application Support"
-			
 		plex_plugin_data_dir = os.path.join(
 			base_dir,
 			'Plex Media Server',
@@ -419,9 +420,27 @@ class SportsDBAgent(Agent.TV_Shows):
 
 				event_id = self.call_get_event_id(season_number, episode_number, episode_path, league_id)
 
+				# If no event ID is found
 				if not event_id:
-					LogMessage("❌ ERROR: No event ID found for S{}E{}, skipping.".format(season_number, episode_number))
-					continue  # Skip this episode if no event ID
+					LogMessage("❌ ERROR: No event ID found for S{}E{}, applying backup image and skipping.".format(season_number, episode_number))
+
+					# Apply the backup event image
+					thumb_url = "http://127.0.0.1:32400/:/plugins/com.plexapp.agents.sportsdbagent/resources/event_backup_img.jpg"
+
+					try:
+						# Remove existing thumbnails explicitly
+						for key in episode.thumbs.keys():
+							del episode.thumbs[key]
+
+						# Now assign correctly via Plex HTTP request
+						image_data = HTTP.Request(thumb_url, sleep=0.5).content
+						episode.thumbs[thumb_url] = Proxy.Preview(image_data, sort_order=1)
+
+						LogMessage("🖼️ Successfully applied local backup image.")
+					except Exception as e:
+						LogMessage("❌ ERROR: Failed to assign backup image: {}".format(e))
+
+					continue  # Skip this episode because no event ID
 
 				# endregion
 
@@ -438,7 +457,6 @@ class SportsDBAgent(Agent.TV_Shows):
 				# endregion
 
 				# region STEP (7) UPDATE EPISODE METADATA
-				
 				self.update_episode_metadata(metadata, media, event_metadata, episode, season_number, episode_number, episode_path)
 
 				# endregion

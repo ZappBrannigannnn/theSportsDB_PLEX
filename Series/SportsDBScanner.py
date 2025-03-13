@@ -61,27 +61,18 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 
 	# region GET LEAGUE AND SEASON NAMES FROM FOLDERS
 	try:
-		#####
-		LogMessage("►► Getting League and Season from folder structure: {}".format(path))
 		# Ensure we have enough folder depth (needs at least: /SPORTS/LEAGUE/SEASON/)
 		path_parts = path.split(os.sep)
 		if len(path_parts) < 2:
-			LogMessage("►► ERROR: Not enough folder depth (needs at least: /SPORTS/LEAGUE/SEASON/)")
 			return
 
 		league_name = path_parts[-2]  # LEAGUE = Show Name
-		#####
-		LogMessage("SHOW NAME: {}".format(league_name))
 		season_name = path_parts[-1]  # SEASON Folder (e.g., "2023", "2021-2022", "Spring 2023")
-		#####
-		LogMessage("SEASON NAME: {}".format(season_name))
-
-		#####
-		LogMessage("►► League: {}".format(league_name))
-		LogMessage("►► Season: {}".format(season_name))
+		#LogMessage("►► League: {}".format(league_name))
+		#LogMessage("►► Season: {}".format(season_name))
 
 	except Exception as e:
-		LogMessage("►► ERROR: extracting League and Season from folder structure: {}".format(str(e)))
+		LogMessage("►► ERROR: Getting the league and season folder words (something weird happened): {}".format(str(e)))
 		return
 
 	# endregion
@@ -105,15 +96,12 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 
 	# Create the Plex plugin data directory if it doesn't exist
 	if not os.path.exists(plex_plugin_data_dir):
-		#####
-		LogMessage("plex_plugin_data_dir does not exist, creating it: {}".format(plex_plugin_data_dir))
+		#LogMessage("plex_plugin_data_dir does not exist, creating it: {}".format(plex_plugin_data_dir))
 		try:
 			os.makedirs(plex_plugin_data_dir)
 		except OSError as e:
-			#####
 			LogMessage("►► Error creating Plex plugin data directory (1): {}".format(str(e)))
 			if not os.path.isdir(plex_plugin_data_dir):  # Ensure another process didn't create it
-				#####
 				LogMessage("►► Error creating Plex plugin data directory (2): {}".format(str(e)))
 				raise
 
@@ -140,8 +128,6 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 
 	for league in leagues:
 		if league["name"] == league_name:
-			#####
-			LogMessage("►► League already exists in JSON file: '{}' with ID: {}".format(league_name, league["id"]))
 			# Assign the id from json file to league_id
 			league_id = league["id"]
 			# if the matching league name's league id is none, keep league_exists as False
@@ -167,7 +153,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 		try:
 			with open(league_id_map_file, "w") as f:
 				json.dump({"leagues": leagues}, f, indent=4)
-			LogMessage("►► Added new league to JSON file: '{}' with ID: {}".format(league_name, league_id))
+			#LogMessage("►► Added new league to JSON file: '{}' with ID: {}".format(league_name, league_id))
 		except Exception as e:
 			LogMessage("►►  Error updating JSON file: {}".format(str(e)))
 
