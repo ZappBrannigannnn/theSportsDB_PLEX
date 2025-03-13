@@ -29,12 +29,18 @@
 1. The agent was deisgned so you wouldn't have to rename video files
     But there are some requirements
     The files must contain:
-        A) Either a date or a round number 
+   
+        A) Either a date or a round number
+   
             - DATE IS PREFERRED AS IT RETURNS FEWER RESULTS TO MATCH AGAINST
+   
             - ROUND NUMBERS CAN COME IN DIFFERENT PATTERNS
+   
             - IF A FILENAME HAS BOTH THE DATE WILL BE USED
+
         B) The teams involved (doesn't have to be the full length name, but definitely their unique words.)
-2. Examples of filenames and the folder structure of what this SCANNER and AGENT were tested on:
+
+3. Examples of filenames and the folder structure of what this SCANNER and AGENT were tested on:
 
 "E:\SPORTS\Australian National Rugby League\2021\NRL 2021 - Round 25 - Titans vs Warriors 1080p.mp4"
 
