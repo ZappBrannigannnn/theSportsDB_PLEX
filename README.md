@@ -37,12 +37,19 @@ FILE NAMING
 2. Examples of filenames and the folder structure of what this SCANNER and AGENT were tested on:
 
 "E:\SPORTS\Australian National Rugby League\2021\NRL 2021 - Round 25 - Titans vs Warriors 1080p.mp4"
+
 "E:\SPORTS\Australian National Rugby League\2021\NRL 2021 Round 8 - Dragons v Tigers 576p x264.mp4"
+
 "E:\SPORTS\Australian National Rugby League\2022\NRL 2022 Round 3 - Sea Eagles v Bulldogs 720p50 H.264.mp4"
+
 "E:\SPORTS\Australian National Rugby League\2022\2022 - Round 8 - Eels vs Cowboys 1080p.mp4"
+
 "E:\SPORTS\Australian National Rugby League\2023\NRL - 2023 - Round 23 - Raiders vs Tigers 1080p.mp4"
+
 "E:\SPORTS\Australian National Rugby League\2023\NRL 2023 Round 5 - Sharks v Warriors 720p50 H.264.mp4"
+
 "E:\SPORTS\Australian National Rugby League\2024\NRL 2024 Round 2 - Sea Eagles v Roosters 1080p H.264.mp4"
+
 "E:\SPORTS\Australian National Rugby League\2024\NRL 2024 Round 9 - Knights v Warriors - 720p.mp4"
 
 "E:\SPORTS\English Premier League\2020-2021\2020.09.26_EPL_2020_21_R.02_Crystal_Palace_vs_Everton_[rgfootball.net]_720p.50_SSU.mp4"
