@@ -100,8 +100,6 @@
     
     "E:\SPORTS\ATP World Tour\2023\ATP USOpen 2023-09-04 Djokovic v Gojo SS 720p H264 English.mp4"
 
-**TO INCLUDE THE ROUND OR DATE AS IT IS IN theSportsDB.com**
-
 - I would suggest trying it without renaming first. And if it fails to find a match or grabs the wrong one then rename and scan again. 
 - Adding dates is always going to be better than adding rounds.
 
