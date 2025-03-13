@@ -12,7 +12,7 @@
 3. In the SCANNERS/SERIES/YourSportsDB_API_KEY.json file, enter your API KEY
 
 **IN PLEX**
-1.  Create your new sports library as a Tv Show
+1.  Create your new sports library as a TV Show
 2.	Select SportsDBAgent as the agent.
 3.	Select SportsDBScanner as the scanner (might be selected automatically when SportsDBAgent is selected)
 4.  Enter your API KEY in the AGENT settings or in Advanced library settings.
