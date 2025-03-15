@@ -1,8 +1,8 @@
 [
     {
-      "id": "theSportsDBAPIKey",
-      "label": "What is your TheSportsDB API key?",
-      "type": "text",
+      "id":      "theSportsDBAPIKey",
+      "label":   "What is your TheSportsDB API key?",
+      "type":    "text",
       "default": "98752398"
     }
 ]
