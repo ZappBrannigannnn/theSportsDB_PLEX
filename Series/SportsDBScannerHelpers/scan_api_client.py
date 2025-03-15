@@ -260,6 +260,7 @@ def get_events_on_date(formatted_date, league_id, SPORTSDB_API):
 	try:
 		response = requests.get(events_on_date_url, verify=certifi.where(), timeout=10)
 		response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
+
 		try:
 			event_date_data = response.json()
 		except AttributeError:  # Python 2 fallback
@@ -268,10 +269,36 @@ def get_events_on_date(formatted_date, league_id, SPORTSDB_API):
 		if "events" in event_date_data and event_date_data["events"]:
 			"""LogMessage("✅ Retrieved {} events for: {}".format(formatted_date, league_id))"""
 			return event_date_data["events"]  # Uses 'event_date_data' instead of 'data'
-
 		else:
-			LogMessage("❌ No events found for date: {}".format(formatted_date))
-			return None
+			LogMessage("❌ No events found for date: {}. Swapping the day and month and trying again.".format(formatted_date))
+
+			# region try again with swapped month and day
+
+			# Split up the formatted date at the hyphens
+			parts = formatted_date.split('-')
+			
+			if len(parts) == 3:
+				if len(parts[0]) == 4:  # Format: YYYY-MM-DD
+					swapped_date = ("{}-{}-{}".format(parts[0], parts[2], parts[1])) # Swap MM and DD
+
+				events_on_date_url_swapped = "{}/eventsday.php?d={}&l={}".format(SPORTSDB_API, swapped_date, league_id)
+				response = requests.get(events_on_date_url_swapped, verify=certifi.where(), timeout=10)
+				response.raise_for_status()
+
+				try:
+					event_date_data = response.json()
+				except AttributeError:
+					event_date_data = json.loads(response.text)
+
+				if "events" in event_date_data and event_date_data["events"]:
+					return event_date_data["events"]
+				else:
+					LogMessage("❌ No events found for swapped date: {}".format(swapped_date))
+					return None
+			else:
+				LogMessage("❌ Date can't be swapped. Invalid date format: {}".format(formatted_date))
+				return None
+			# endregion
 
 	except requests.exceptions.RequestException as e:
 		LogMessage("❌ API Request Error (1): {}".format(e))

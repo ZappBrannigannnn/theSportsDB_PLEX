@@ -160,7 +160,6 @@ class SportsDBAgent(Agent.TV_Shows):
 		league_identifier = "{}".format(league_id) # Store the league ID in metadata.id
 		league_year = league_metadata["intFormedYear"] # Get the year from the metadata
 		league_thumb = league_metadata["strPoster"] # Get the the thumb from the metadata
-		league_art = league_metadata["strFanart1"] # Get the art from the metadata (doesn't seem to be being use anymore too lazy to test right now)
 
 		# Add to the SHOW result
 		results.Append(MetadataSearchResult(
