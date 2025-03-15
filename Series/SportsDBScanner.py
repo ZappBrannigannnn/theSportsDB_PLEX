@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 # region IMPORTS
-
 import sys
 import os
 
@@ -17,30 +16,23 @@ from datetime import datetime
 import urllib3
 from logging_config import LogMessage # LOGGING_CONFIG.PY
 import json
-
-# API CLIENT IMPORTS
 from scan_api_client import get_league_id
 from scan_api_client import get_event_id
-
 # endregion
 
-# region GET API KEY and SPORTSDB API
+# region GET API KEY and Create SPORTSDB API
 
 # Get the absolute path to settings.json (same directory as script)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))  # Get current script directory
 SETTINGS_FILE = os.path.join(SCRIPT_DIR, "YourSportsDB_API_KEY.json")  # Construct full path
-
 # Check if the settings file exists
 if not os.path.exists(SETTINGS_FILE):
 	raise FileNotFoundError("ERROR: settings.json not found! Please create the file and add your API key.")
-
 # Read settings.json
 with open(SETTINGS_FILE, "r") as file:
 	settings = json.load(file)
-
 # Get API Key from JSON
 API_KEY = settings.get("API_KEY")
-
 if not API_KEY:
 	raise ValueError("ERROR: No API Key found in settings.json!")
 
@@ -68,8 +60,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 
 		league_name = path_parts[-2]  # LEAGUE = Show Name
 		season_name = path_parts[-1]  # SEASON Folder (e.g., "2023", "2021-2022", "Spring 2023")
-		#LogMessage("►► League: {}".format(league_name))
-		#LogMessage("►► Season: {}".format(season_name))
+		"""LogMessage("►► League: {}".format(league_name))"""
+		"""LogMessage("►► Season: {}".format(season_name))"""
 
 	except Exception as e:
 		LogMessage("►► ERROR: Getting the league and season folder words (something weird happened): {}".format(str(e)))
@@ -77,9 +69,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 
 	# endregion
 
-	# region GET LEAGUE ID FROM JSON OR API CLIENT
+	# region DEFINE/CREATE THE JSON FILE LOCATION TO WRITE THE LEAGUE MAP TO
 
-	# Get the Plex plugin data directory
+	# Get the Plex plugin data directory to write the JSON league map to
 	if os.name == 'nt':  # Windows
 		base_dir = os.getenv('LOCALAPPDATA', os.path.expanduser("~"))
 	else:  # Linux/Debian
@@ -96,7 +88,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 
 	# Create the Plex plugin data directory if it doesn't exist
 	if not os.path.exists(plex_plugin_data_dir):
-		#LogMessage("plex_plugin_data_dir does not exist, creating it: {}".format(plex_plugin_data_dir))
+		"""LogMessage("plex_plugin_data_dir does not exist, creating it: {}".format(plex_plugin_data_dir))"""
 		try:
 			os.makedirs(plex_plugin_data_dir)
 		except OSError as e:
@@ -135,7 +127,6 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 				# If the id is not None, set league_exists to True
 				league_exists = True
 			break
-			
 	# endregion
 
 	# region IF THE LEAGUE DOES NOT EXIST, GET THE LEAGUE ID FROM THE API_CLIENT AND ADD IT TO THE LIST
@@ -153,7 +144,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 		try:
 			with open(league_id_map_file, "w") as f:
 				json.dump({"leagues": leagues}, f, indent=4)
-			#LogMessage("►► Added new league to JSON file: '{}' with ID: {}".format(league_name, league_id))
+			"""LogMessage("►► Added new league to JSON file: '{}' with ID: {}".format(league_name, league_id))"""
 		except Exception as e:
 			LogMessage("►►  Error updating JSON file: {}".format(str(e)))
 
@@ -164,6 +155,11 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 	# region Iterate through files
 	for file in files:
 		filename = os.path.basename(file)  # Extracts the actual file name, e.g., "episodeXYZ123.mp4"
+
+		# Ignore files that start with
+		if not filename.endswith((".mp4", ".avi", ".mov", ".wmv", ".flv", ".mkv", ".mpeg", ".3gp", ".webm", ".m4v")):
+			LogMessage("►► Skipping non-videofile: {}".format(filename))
+			continue
 		# endregion
 
 		# region Get the event ID from the API_CLIENT
@@ -174,7 +170,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 		event_id, event_title, event_date, order_number = get_event_id(league_name, league_id, season_name, filename, SPORTSDB_API)
 		# endregion
 
-		# region Process the event info before inserting.
+		# region Process the event info before applying.
 		if event_id is None:
 			event_id = "No event ID found"
 
@@ -221,6 +217,5 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 
 		LogMessage("►► Processed 'media' {}\n\n".format(media))
 
-		# endregion
-
 	LogMessage("►► FINISHED SCAN\n")
+	# endregion

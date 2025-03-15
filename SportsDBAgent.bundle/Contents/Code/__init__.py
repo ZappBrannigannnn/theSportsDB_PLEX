@@ -1,17 +1,15 @@
-# region IMPORTS ########################################################################################
+# region IMPORTS
 
 import time, os, datetime
 import requests
 import sys
 import json
 import io
-
 from api_client import get_league_info
 from api_client import get_team_images
 from api_client import get_season_posters
 from api_client import get_event_id
 from api_client import get_event_info
-
 import png
 
 # endregion
@@ -83,13 +81,15 @@ class SportsDBAgent(Agent.TV_Shows):
 
 # endregion
 
-	# region SEARCH FUNCTION / SERIES / SHOW / LEAGUE LEVEL STUFF  
+	# SEARCH FUNCTION
 
+	# region seach start
 	def search(self, results, media, lang, manual, **kwargs):
 		LogMessage("\n\n")
 		LogMessage("🔥 SEARCH FUNCTION TRIGGERED")
+	# endregion
 
-		# region STEP 1: Fetch the league ID from the JSON file
+		# region SEARCH STEP 1: Fetch the league ID from the JSON file
 
 		# region GET THE LEAGUE MAP LOCATION
 		plex_plugin_data_dir = os.path.join(
@@ -143,8 +143,7 @@ class SportsDBAgent(Agent.TV_Shows):
 
 		# endregion
 
-		# STEP 2: Get league metadata info
-		# region
+		# region SEARCH STEP 2: Get league metadata info
 
 		# Get all the league metadata
 		league_metadata = get_league_info(league_id, SPORTSDB_API)
@@ -156,19 +155,14 @@ class SportsDBAgent(Agent.TV_Shows):
 
 		# endregion
 
-		# STEP 3: Update "Results"
-		# region
+		# region SEARCH STEP 3: Update "Results"
 
-		# Store only the league ID in metadata.id
-		league_identifier = "{}".format(league_id)
-		# Get the year from the metadata
-		league_year = league_metadata["intFormedYear"]
-		# Get the the thumb from the metadata
-		league_thumb = league_metadata["strPoster"]
-		# Get the art from the metadata (doesn't seem to be being use anymore too lazy to test right now)
-		league_art = league_metadata["strFanart1"]
+		league_identifier = "{}".format(league_id) # Store the league ID in metadata.id
+		league_year = league_metadata["intFormedYear"] # Get the year from the metadata
+		league_thumb = league_metadata["strPoster"] # Get the the thumb from the metadata
+		league_art = league_metadata["strFanart1"] # Get the art from the metadata (doesn't seem to be being use anymore too lazy to test right now)
 
-		# Return a minimal search result (Plex will auto-select)
+		# Add to the SHOW result
 		results.Append(MetadataSearchResult(
 			id=league_identifier,
 			name=show_title,
@@ -180,9 +174,7 @@ class SportsDBAgent(Agent.TV_Shows):
 
 		# endregion
 
-	# endregion
-
-	# region UPDATE FUNCTION / LEAGUE METADATA / EPISODE EVERYTHING 
+	# UPDATE FUNCTION / LEAGUE METADATA / EPISODE EVERYTHING 
 
 	# region (1) call_get_league_info (CALLED BY UPDATE)
 	def call_get_league_info(self, metadata, league_id):
@@ -387,7 +379,7 @@ class SportsDBAgent(Agent.TV_Shows):
 	# region (7.1) Create Custom Event Images
 	def create_episode_thumb(self, episode_filename, event_metadata, metadata, episode_path):
 
-		# region Define Output image location
+		# region Define Output image path
 
 		# Define Output image location
 		output_dir = os.path.join(
@@ -468,29 +460,19 @@ class SportsDBAgent(Agent.TV_Shows):
 				return None
 			# endregion
 
-			# region Reference locations from base image
-			"""
-			BASE IMAGE = 1280 X 720 px
-			______CENTERS______
-			HOME HORIZ = 279px
-			AWAY HORIZ = 1001px
-			VERT       = 304px
-			"""
-			# endregion
-
-
-			# Chosen image re-sizes (FOR EASY EDITING) ######################################
+			# region Define logo sizes and y-position (FOR EASY EDITING) ######################################
 			logo_width = 1200 
 			logo_height = 1200
 			y_position = 1150 - (logo_height // 2) # 304 from "Reference locations from base image" ^^^
+			# endregion
 
-
-			# Read the base image
+			# region Read and Resize base image
 			base_reader = png.Reader(filename=base_img_path)
 			base_w, base_h, base_pixels, base_info = base_reader.asRGBA()
 			base_pixels = list(base_pixels)  # Convert `imap` to a list
+			# endregion
 
-			# Read and resize home team image
+			# region Read, Resize and Add home team image
 			if home_team_thumb and os.path.exists(home_team_thumb):
 				home_reader = png.Reader(filename=home_team_thumb)
 				home_w, home_h, home_team_pixels, _ = home_reader.asRGBA()
@@ -503,9 +485,9 @@ class SportsDBAgent(Agent.TV_Shows):
 
 				# Overlay home logo
 				base_pixels = self.paste_image(base_pixels, home_team_pixels, home_x, y_position)
+			# endregion
 
-
-			# Read and resize away team image
+			# region Read, Resize and Add away team image
 			if away_team_thumb and os.path.exists(away_team_thumb):
 				away_reader = png.Reader(filename=away_team_thumb)
 				away_w, away_h, away_team_pixels, _ = away_reader.asRGBA()
@@ -518,8 +500,9 @@ class SportsDBAgent(Agent.TV_Shows):
 
 				# Overlay away logo
 				base_pixels = self.paste_image(base_pixels, away_team_pixels, away_x, y_position)
+			# endregion
 
-			# Save final image
+			# region Save final image
 			with io.open(custom_image_path, "wb") as f:
 				writer = png.Writer(width=base_w, height=base_h, alpha=True)
 				writer.write(f, base_pixels)
@@ -530,12 +513,11 @@ class SportsDBAgent(Agent.TV_Shows):
 			LogMessage("❌ Error creating episode thumbnail: {}".format(e))
 			return None
 
-		#return custom_image_path  # Return saved image path
-		# endregion
+			# endregion
 
 		# endregion
 
-	# region (7) UPDATE EPISODE METADATA
+	# region (7) APPLY EPISODE METADATA
 	def update_episode_metadata(self, metadata, media, event_metadata, episode, season_number, episode_number, episode_path):
 
 		# region Pull specific metadatas from event_metadata
@@ -569,12 +551,21 @@ class SportsDBAgent(Agent.TV_Shows):
 			except ValueError:
 				LogMessage("❌ ERROR: Invalid date format: {}".format(date))
 
+		if fanart and fanart.startswith("http"):
+			try:
+				episode.art[fanart] = Proxy.Preview(HTTP.Request(fanart, sleep=0.5).content, sort_order=1)
+			except Exception as e:
+				LogMessage("❌ ERROR: Failed to assign fanart: {}".format(e))
+
 		# Assign images correctly (validate URLs first)
 		if thumb and thumb.startswith("http"):
 			try:
 				episode.thumbs[thumb] = Proxy.Preview(HTTP.Request(thumb, sleep=0.5).content, sort_order=1)
 			except Exception as e:
 				LogMessage("❌ ERROR: Failed to assign thumb: {}".format(e))
+		# endregion
+		
+		# region If no thumb, create one
 		if not thumb:
 			LogMessage("❌ No thumb found for: {} - S{}E{}. Going to create one.".format(eventtitle, season_number, episode_number))
 
@@ -610,12 +601,6 @@ class SportsDBAgent(Agent.TV_Shows):
 			except Exception as e:
 				LogMessage("❌ ERROR: Failed to assign custom backup image: {}".format(e))
 
-		if fanart and fanart.startswith("http"):
-			try:
-				episode.art[fanart] = Proxy.Preview(HTTP.Request(fanart, sleep=0.5).content, sort_order=1)
-			except Exception as e:
-				LogMessage("❌ ERROR: Failed to assign fanart: {}".format(e))
-
 		"""LogMessage("✅ Successfully updated metadata for: {} - S{}E{}".format(eventtitle, season_number, episode_number))"""
 		# endregion
 		
@@ -630,9 +615,6 @@ class SportsDBAgent(Agent.TV_Shows):
 
 		# Assign league ID
 		league_id = metadata.id
-
-		# STEP (3) (ALL SEASON POSTERS FOR LEAGUE ONCE) Call get_season_posters for the league from the API #################
-		season_posters = get_season_posters(league_id, SPORTSDB_API)
 
 		# Check if the league already has an art (fanart/background)
 		if not metadata.art:
@@ -653,7 +635,8 @@ class SportsDBAgent(Agent.TV_Shows):
 		
 		# endregion
 
-		# region STEP (3) ITERATE THROUGH SEASONS AND FETCH POSTERS
+		# region STEP (3) Get all season posters and apply to seasons
+		season_posters = get_season_posters(league_id, SPORTSDB_API)
 
 		for season_number in media.seasons:
 
@@ -732,5 +715,3 @@ class SportsDBAgent(Agent.TV_Shows):
 		LogMessage("✅ UPDATE FUNCTION COMPLETED SUCCESSFULLY.\n")
 
 		# endregion
-
-	# endregion

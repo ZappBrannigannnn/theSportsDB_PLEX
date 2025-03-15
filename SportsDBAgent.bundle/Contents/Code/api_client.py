@@ -1,4 +1,4 @@
-# region IMPORTS ########################################################################################
+# region IMPORTS 
 import re
 import urllib2
 import json
@@ -11,7 +11,7 @@ from difflib import SequenceMatcher
 import io
 # endregion
 
-# region LOGGING ########################################################################################
+# region LOGGING 
 def LogMessage(dbgline):
 	timestamp = time.strftime("%H:%M:%S - ")
 
@@ -21,9 +21,9 @@ def LogMessage(dbgline):
 		print("❌ Log object is not available. Running in a non-Plex environment.")
 # endregion
 
-# region LEAGUE LEVEL AND TEAM IMAGE STUFF ##############################################################
+# region LEAGUE LEVEL AND TEAM IMAGE STUFF
 
-# region get_league_info FROM API #######################################################################
+# region get_league_info FROM API
 def get_league_info(league_id, SPORTSDB_API):
 	league_info_url = "{}/lookupleague.php?id={}".format(SPORTSDB_API, league_id)
 
@@ -46,7 +46,7 @@ def get_league_info(league_id, SPORTSDB_API):
 		return None
 # endregion
 
-# region get_team_images FROM API #######################################################################
+# region get_team_images FROM API
 def get_team_images(league_id, SPORTSDB_API):
 	team_images_url = "{}/lookup_all_teams.php?id={}".format(SPORTSDB_API, league_id)
 
@@ -70,12 +70,10 @@ def get_team_images(league_id, SPORTSDB_API):
 
 # endregion
 
-# region GET SEASON POSTER FROM API #####################################################################
+# region GET SEASON POSTER FROM API
 def get_season_posters(league_id, SPORTSDB_API):
 
 	season_posters_url = ("{}/search_all_seasons.php?id={}&poster=1".format(SPORTSDB_API, league_id))
-
-	# https://www.thesportsdb.com/api/v1/json/98752398/search_all_seasons.php?id=4328&poster=1
 
 	try:
 		response = urllib2.urlopen(season_posters_url, timeout=10)
@@ -100,10 +98,9 @@ def get_season_posters(league_id, SPORTSDB_API):
 	except urllib2.URLError as e:
 		LogMessage("⚠ API Request Error: {}".format(e))
 		return {}
-
 # endregion
 
-# region GET EVENT ID STUFF #############################################################################
+# GET EVENT ID HELPERS
 
 # region (1) Get DATE from filename
 
@@ -296,7 +293,7 @@ def get_events_on_date(formatted_date, league_id, SPORTSDB_API):
 		event_date_round_data = json.load(response)
 
 		if "events" in event_date_round_data and event_date_round_data["events"]:
-			#LogMessage("✅ Retrieved events on date: {} for: {}".format(formatted_date, league_id))
+			"""LogMessage("✅ Retrieved events on date: {} for: {}".format(formatted_date, league_id))"""
 			return event_date_round_data["events"]  # Uses 'event_date_round_data' instead of 'data'
 
 		else:
@@ -325,7 +322,7 @@ def get_events_in_round(round_number, league_id, SPORTSDB_API, season_number):
 		event_date_round_data = json.load(response) 
 
 		if "events" in event_date_round_data and event_date_round_data["events"]:
-			#LogMessage("✅ Retrieved events in round {} For: {} season: {}".format(round_number, league_id, season_number))
+			"""LogMessage("✅ Retrieved events in round {} For: {} season: {}".format(round_number, league_id, season_number))"""
 			return event_date_round_data["events"]
 
 		else:
@@ -337,8 +334,6 @@ def get_events_in_round(round_number, league_id, SPORTSDB_API, season_number):
 		return None
 
 # endregion
-
-# region (4) FIND MATCHING EVENT
 
 # region (4.1) clean_text HELPER FUNCTION
 
@@ -352,9 +347,7 @@ def clean_text(text):
 
 # endregion
 
-# region (4.2) compute_match_score HELPER FUNCTION
-
-# region (4.2.1) remove_stop_phrases from matching HELPER FUNCTION
+# region (4.2) remove_stop_phrases from matching HELPER FUNCTION
 def remove_stop_phrases(words, league_name): # Remove multi-word stop phrases from a list of words.
 
 	# Convert league name into a list of words ( to add to stop phrases)
@@ -385,9 +378,9 @@ def remove_stop_phrases(words, league_name): # Remove multi-word stop phrases fr
 		i = i + 1  # Use standard addition instead of +=
 	
 	return words
-
 # endregion
 
+# region (4.3) compute_match_score HELPER FUNCTION
 def compute_match_score(filename_words, event_words, league_name):
 
 	# Convert sets to lists for ordered processing
@@ -413,7 +406,7 @@ def compute_match_score(filename_words, event_words, league_name):
 	return len(common_words), common_words  # Score is the count of matching words
 # endregion
 
-# region (4.3) find_matching_event FUNCTION
+# region (4) find_matching_event FUNCTION
 
 def find_matching_event(league_name, filename, event_date_round_data):
 	
@@ -527,7 +520,7 @@ def find_matching_event(league_name, filename, event_date_round_data):
 
 		# endregion
 
-	# Final Match Decision
+	# region Final Match Decision
 	if best_match:
 		event_id = best_match.get("idEvent")
 		event_title = best_match.get("strEvent")
@@ -542,12 +535,11 @@ def find_matching_event(league_name, filename, event_date_round_data):
 
 	LogMessage("❌ No match found for filename: {}".format(filename))
 	return None
+	# endregion
 
 # endregion
 
-# endregion
-
-# >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< >< #
+# GET EVENT ID FUNCTION
 
 # region get_event_id function START
 def get_event_id(league_name, season_number, episode_number, episode_path, league_id, SPORTSDB_API):
@@ -585,7 +577,7 @@ def get_event_id(league_name, season_number, episode_number, episode_path, leagu
 		return None
 		# endregion
 
-	# region 4) Get event ID by matching the filename against the event_date_round_data
+	# region (4) Get event ID by matching the filename against the event_date_round_data
 	event_id = find_matching_event(league_name, filename, event_date_round_data)
 
 	if event_id is None:
@@ -596,13 +588,12 @@ def get_event_id(league_name, season_number, episode_number, episode_path, leagu
 
 	# endregion
 
-# endregion
 
-# region GET EVENT INFO FROM API ########################################################################
+# region GET EVENT INFO FROM API
 def get_event_info(SPORTSDB_API, event_id):
 	
 	event_info_url = "{}/lookupevent.php?id={}".format(SPORTSDB_API, event_id)
-	#LogMessage("🔍 Requesting from URL: {}".format(event_info_url))
+	"""LogMessage("🔍 Requesting from URL: {}".format(event_info_url))"""
 
 	try:
 		response = urllib2.urlopen(event_info_url, timeout=10)
@@ -624,4 +615,4 @@ def get_event_info(SPORTSDB_API, event_id):
 	except urllib2.URLError as e:
 		LogMessage("⚠ API Request Error: {}".format(e))
 		return None
-# endregion
+	# endregion

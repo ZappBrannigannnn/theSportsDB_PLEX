@@ -10,9 +10,7 @@ import requests
 from logging_config import LogMessage
 from dateutil import parser
 import json
-
 import unicodedata
-
 
 # endregion
 
@@ -25,7 +23,7 @@ def get_league_id(league_name, SPORTSDB_API):
 
 	league_list_url = "{}/all_leagues.php".format(SPORTSDB_API)
 
-	#LogMessage("🗨️ League List URL: {}".format(league_list_url))
+	"""LogMessage("🗨️ League List URL: {}".format(league_list_url))"""
 
 	try:
 		response = requests.get(league_list_url, verify=certifi.where(), timeout=10)
@@ -39,9 +37,8 @@ def get_league_id(league_name, SPORTSDB_API):
 			for league in data["leagues"]:
 				if league["strLeague"].lower() == league_name.lower():
 					league_id = league.get("idLeague", None)
-					#LogMessage("✅ Found League ID: {}".format(league_id))
+					"""LogMessage("✅ Found League ID: {}".format(league_id))"""
 					break  # Stop loop once the league is found
-
 
 	except requests.exceptions.HTTPError as e:
 		LogMessage("⚠ HTTP Error (1): {} - {}".format(e.response.status_code, str(e)))
@@ -66,7 +63,7 @@ def get_league_id(league_name, SPORTSDB_API):
 
 # endregion
 
-# region GET EVENT ID helpers
+# GET EVENT ID helpers
 
 # region (-1-) Get DATE from filename
 
@@ -269,7 +266,7 @@ def get_events_on_date(formatted_date, league_id, SPORTSDB_API):
 			event_date_data = json.loads(response.text)
 
 		if "events" in event_date_data and event_date_data["events"]:
-			#LogMessage("✅ Retrieved {} events for: {}".format(formatted_date, league_id))
+			"""LogMessage("✅ Retrieved {} events for: {}".format(formatted_date, league_id))"""
 			return event_date_data["events"]  # Uses 'event_date_data' instead of 'data'
 
 		else:
@@ -301,7 +298,7 @@ def get_events_in_round(league_id, season_name, round_number, SPORTSDB_API):
 
 
 		if "events" in event_round_data and event_round_data["events"]:
-			#LogMessage("✅ Retrieved ROUND {} events For: {} season: {}".format(round_number, league_id, season_name))
+			"""LogMessage("✅ Retrieved ROUND {} events For: {} season: {}".format(round_number, league_id, season_name))"""
 			return event_round_data["events"]
 
 		else:
@@ -336,9 +333,7 @@ def clean_text(text):
 
 # endregion
 
-# region (4.2) compute_match_score HELPER FUNCTION
-
-# region (4.2.1) remove_stop_phrases from matching HELPER FUNCTION
+# region (4.2) remove_stop_phrases from matching HELPER FUNCTION
 def remove_stop_phrases(words, league_name): # Remove multi-word stop phrases from a list of words.
 
 	# Convert league name into a list of words ( to add to stop phrases)
@@ -368,12 +363,13 @@ def remove_stop_phrases(words, league_name): # Remove multi-word stop phrases fr
 				break
 		i += 1
 	
-	#LogMessage("STOP PHRASES WITH LEAGUE NAME ADDED: {}".format(stop_phrases))
+	"""LogMessage("STOP PHRASES WITH LEAGUE NAME ADDED: {}".format(stop_phrases))"""
 
 	return words
 
 # endregion
 
+# region (4.3) COMPUTE MATCH SCORE
 def compute_match_score(filename_words, event_words, league_name):
 
 	# Convert sets to lists for ordered processing
@@ -399,7 +395,7 @@ def compute_match_score(filename_words, event_words, league_name):
 	return len(common_words), common_words  # Score is the count of matching words
 # endregion
 
-# region (4.3) find_matching_event FUNCTION
+# region (4.4) find_matching_event FUNCTION
 
 def find_matching_event(league_name, filename, event_date_round_data):
 	
@@ -548,9 +544,9 @@ def get_event_order_number(event_date_data, event_id):
 
 # endregion
 
-# region GET_EVENT_ID function
+# GET_EVENT_ID function
 
-# region get_event_id initialize
+# region GET_EVENT_ID START
 def get_event_id(league_name, league_id, season_name, filename, SPORTSDB_API):
 	LogMessage("🔍 Getting event ID from API for: {}".format(filename))
 	
@@ -637,7 +633,7 @@ def get_event_id(league_name, league_id, season_name, filename, SPORTSDB_API):
 
 		if event_date_data:
 			total_events_on_date = len(event_date_data)
-			#LogMessage("✅ (i) Total events on date: {}".format(total_events_on_date))
+			"""LogMessage("✅ (i) Total events on date: {}".format(total_events_on_date))"""
 		else:
 			LogMessage("❌ No events found for date: {} (League: {})".format(event_date, league_id))
 			return None
@@ -645,7 +641,7 @@ def get_event_id(league_name, league_id, season_name, filename, SPORTSDB_API):
 	else:
 		# If event_date_data exists (from having it in the filename in the first place)
 		total_events_on_date = len(event_date_data)
-		#LogMessage("✅ (ii) Total events on date: {}".format(total_events_on_date))
+		"""LogMessage("✅ (ii) Total events on date: {}".format(total_events_on_date))"""
 
 	# endregion
 
@@ -657,9 +653,7 @@ def get_event_id(league_name, league_id, season_name, filename, SPORTSDB_API):
 		LogMessage("✅ Found event_id {} at order_number: {} (sorted by timestamp)\n".format(event_id, order_number))
 	else:
 		LogMessage("❌ event_id {} not found in event_date_data".format(event_id))
-
-		# endregion
 		
 	return event_id, event_title, event_date, order_number
 
-# endregion
+	# endregion
