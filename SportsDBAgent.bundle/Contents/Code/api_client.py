@@ -545,47 +545,59 @@ def get_event_id(league_name, season_number, episode_number, episode_path, leagu
 	event_id = None
 	# endregion
 
-	# region (1) Get DATE from filename
+	# region (1-Date) Get DATE from filename
 	filename = os.path.basename(episode_path)
 	formatted_date = extract_date_from_filename(filename)
 	"""LogMessage("🗨️ FORMATTED DATE: {} For Episode: {}".format(formatted_date, episode_path))"""
 	# endregion
 
-	# region (2) Get ROUND if no DATE from filename
-	if formatted_date is None:
+	# region (2-Date) Get EVENTS on the DATE
+	if formatted_date is not None:
+
+		# (2-Date) Get EVENTS on the DATE
+		event_date_round_data = get_events_on_date(formatted_date, league_id, SPORTSDB_API)
+
+		if event_date_round_data is None:
+			LogMessage("❌ No events found for date: {}. Swapping month and day and trying again.".format(formatted_date))
+			
+			# Swap the month and day
+			parts = formatted_date.split('-')
+
+			if len(parts) == 3 and len(parts[0]) == 4:  # YYYY-MM-DD
+				swapped_date = "{}-{}-{}".format(parts[0], parts[2], parts[1])
+
+				# (2-Swapped Date) Get EVENTS on the SWAPPED DATE
+				event_date_round_data = get_events_on_date(swapped_date, league_id, SPORTSDB_API)
+
+			if event_date_round_data is None:
+				LogMessage("❌ No events found for swapped date (2): {}".format(formatted_date))
+				return None
+			# endregion
+	
+	# region (1-Round) Get ROUND from filename 
+	else:
+		LogMessage("❌ No date found in filename: {}".format(filename))
+	
+		# (1-Round) Get ROUND from filename
 		round_number = extract_round_from_filename(filename, league_name)
 		"""LogMessage("🗨️ ROUND NUMBER: {}".format(round_number))"""
 
 		if round_number is None:
 			LogMessage("⚠️ No date or round found in filename: {}".format(filename))
 			return None
-			# endregion
-
-		# region (3) Get EVENTS in ROUND or DATE
-		else:
-			event_date_round_data = get_events_in_round(round_number, league_id, SPORTSDB_API, season_number)
-	else:
-		event_date_round_data = get_events_on_date(formatted_date, league_id, SPORTSDB_API)
-	
-	# If no event data
-	if event_date_round_data is None:
-		LogMessage("❌ No events found for date: {}. Swapping month and day and trying again.".format(formatted_date))
-
-		# Swap the month and day
-		parts = formatted_date.split('-')
-
-		if len(parts) == 3:
-			if len(parts[0]) == 4:  # YYYY-MM-DD
-				swapped_date = "{}-{}-{}".format(parts[0], parts[2], parts[1])
-
-			event_date_round_data = get_events_on_date(swapped_date, league_id, SPORTSDB_API)
-
-		if event_date_round_data is None:
-			LogMessage("❌ No events found for swapped date (2): {}".format(formatted_date))
-			return None
 		# endregion
 
-	# region (4) Get event ID by matching the filename against the event_date_round_data
+		# region (2-Round) Get EVENTS in the ROUND
+		else:
+			# (2-Round) Get EVENTS in the ROUND
+			event_date_round_data = get_events_in_round(round_number, league_id, SPORTSDB_API, season_number)
+
+			if event_date_round_data is None:
+				LogMessage("❌ No events found for round: {}".format(round_number))
+				return None
+			# endregion
+
+	# region (3) Get event ID by matching the filename words against the event_date_round_data
 	event_id = find_matching_event(league_name, filename, event_date_round_data)
 
 	if event_id is None:
@@ -593,9 +605,7 @@ def get_event_id(league_name, season_number, episode_number, episode_path, leagu
 		return None
 	else:
 		return event_id
-
 	# endregion
-
 
 # region GET EVENT INFO FROM API
 def get_event_info(SPORTSDB_API, event_id):
