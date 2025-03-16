@@ -293,6 +293,8 @@ class SportsDBAgent(Agent.TV_Shows):
 		return event_metadata
 	# endregion
 
+	# region (7.1) Create Custom Event Images
+
 	# region (7.1.1) Download Image
 	def download_image(self, url, custom_image_path):
 		try:
@@ -376,26 +378,7 @@ class SportsDBAgent(Agent.TV_Shows):
 	# endregion
 
 	# region (7.1) Create Custom Event Images
-	def create_episode_thumb(self, episode_filename, event_metadata, metadata, episode_path):
-
-		# region Define Output image path
-
-		# Define Output image location
-		output_dir = os.path.join(
-			BASE_DIR,
-			'Plex Media Server',
-			'Plug-in Support',
-			'Data',
-			'com.plexapp.agents.sportsdbagent',
-			'EventImages',
-		)
-		if not os.path.exists(output_dir):
-			os.makedirs(output_dir)
-
-		# Define the final image path
-		custom_image_path = os.path.join(output_dir, episode_filename + ".png")
-
-		# endregion
+	def create_episode_thumb(self, episode_filename, event_metadata, metadata, episode_path, custom_image_path):
 
 		# region Collect team Images to use for custom event thumb
 		home_team_name = event_metadata.get('strHomeTeam')
@@ -516,6 +499,8 @@ class SportsDBAgent(Agent.TV_Shows):
 
 		# endregion
 
+	# endregion
+
 	# region (7) APPLY EPISODE METADATA
 	def update_episode_metadata(self, metadata, media, event_metadata, episode, season_number, episode_number, episode_path):
 
@@ -571,18 +556,24 @@ class SportsDBAgent(Agent.TV_Shows):
 			# Get the filename from episode_path without the extension
 			episode_filename = os.path.splitext(os.path.basename(episode_path))[0]
 
-			# Call the create_episide_thumb function
-			self.create_episode_thumb(episode_filename,event_metadata, metadata, episode_path)
-
-			custom_image_path = os.path.join(
+			# region Define the custom image path
+			output_dir = os.path.join(
 				BASE_DIR,
 				'Plex Media Server',
 				'Plug-in Support',
 				'Data',
 				'com.plexapp.agents.sportsdbagent',
 				'EventImages',
-				episode_filename + '.png'
-			)			
+			)
+			if not os.path.exists(output_dir):
+				os.makedirs(output_dir)
+				
+			# Define the final image path
+			custom_image_path = os.path.join(output_dir, episode_filename + ".png")
+			# endregion
+
+			# Call the create_episide_thumb function
+			self.create_episode_thumb(episode_filename,event_metadata, metadata, episode_path, custom_image_path)
 
 			try:
 				# Remove existing thumbnails explicitly
@@ -657,6 +648,11 @@ class SportsDBAgent(Agent.TV_Shows):
 				# Ensure episode media exists before accessing file path
 				if not episode_media.items or not episode_media.items[0].parts:
 					LogMessage("❌ ERROR: Missing media parts for S{}E{}, skipping.".format(season_number, episode_number))
+					continue
+
+				# Check if episode has already been processed based on thumbs
+				if episode.thumbs:
+					LogMessage("✅ Skipping existing episode S{}E{} (Thumbnail exists)".format(season_number, episode_number))
 					continue
 
 				# Extract episode's file path
