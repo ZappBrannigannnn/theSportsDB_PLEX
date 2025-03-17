@@ -372,14 +372,28 @@ class SportsDBAgent(Agent.TV_Shows):
 
 	# region (7.1) Create Custom Event Images
 	def create_episode_thumb(self, episode_filename, event_metadata, metadata, episode_path, custom_image_path):
+		# Initialize backup flags
+		home_backup = False
+		away_backup = False
 
 		# region Collect team Images to use for custom event thumb
 		home_team_name = event_metadata.get('strHomeTeam')
 		away_team_name = event_metadata.get('strAwayTeam')
 
 		# ignore trailing spaces
-		home_team_name = home_team_name.strip()
-		away_team_name = away_team_name.strip()
+		if not home_team_name:
+			LogMessage("❌ Failed to find home team name for: {}".format(episode_filename))
+			home_backup = True
+			return home_backup
+		else:
+			home_team_name = home_team_name.strip()
+		
+		if not away_team_name:
+			LogMessage("❌ Failed to find away team name for: {}".format(episode_filename))
+			away_backup = True
+			return away_backup
+		else:
+			away_team_name = away_team_name.strip()
 
 		# Get team images from metadata roles by looking for team names
 		home_team_thumb = None
@@ -392,10 +406,20 @@ class SportsDBAgent(Agent.TV_Shows):
 			if role_name and home_team_name in role_name:
 				home_team_thumb = role_photo
 				"""LogMessage("✅ Found home team image: {}".format(home_team_thumb, custom_image_path))"""
+				if not home_team_thumb:
+					LogMessage("❌ Failed to find home team image for: {}. Using backup image".format(home_team_name, custom_image_path))
+					# home_backup flag set to true so we know to apply the back up image later
+					home_backup = True
+					return home_backup
 
 			if role_name and away_team_name in role_name:
 				away_team_thumb = role_photo
 				"""LogMessage("✅ Found away team image: {}".format(away_team_thumb, custom_image_path))"""
+				if not away_team_thumb:
+					LogMessage("❌ Failed to find away team image for: {}. Using backup image".format(away_team_name, custom_image_path))
+					# away_backup flag set to true so we know to apply the back up image later
+					away_backup = True
+					return away_backup
 			
 		# endregion
 
@@ -568,24 +592,45 @@ class SportsDBAgent(Agent.TV_Shows):
 			custom_image_path = os.path.join(output_dir, episode_filename + ".png")
 			# endregion
 
-			# Call the create_episide_thumb function
-			self.create_episode_thumb(episode_filename,event_metadata, metadata, episode_path, custom_image_path)
+			# Call the create_episide_thumb function and determine whether the backup_image should be used
+			use_backup_image = self.create_episode_thumb(episode_filename,event_metadata, metadata, episode_path, custom_image_path)
 
-			try:
-				# Remove existing thumbnails explicitly
-				for key in episode.thumbs.keys():
-					del episode.thumbs[key]
+			if use_backup_image:
+				#<<
+				LogMessage("🖼️ Using backup image for: {} - S{}E{}".format(eventtitle, season_number, episode_number))
+				
+				# Apply the backup event image
+				thumb_url = "http://127.0.0.1:32400/:/plugins/com.plexapp.agents.sportsdbagent/resources/event_backup_img.jpg"
 
-				if os.path.exists(custom_image_path):
-					with io.open(custom_image_path, "rb") as img_file:
-						episode.thumbs[custom_image_path] = Proxy.Media(img_file.read())
-					"""LogMessage("🖼️ Successfully applied custom backup image.")"""
-				"""
-				else:
-					LogMessage("❌ ERROR: Custom image file not found: {}".format(custom_image_path))"""
+				try:
+					# Remove existing thumbnails explicitly
+					for key in episode.thumbs.keys():
+						del episode.thumbs[key]
 
-			except Exception as e:
-				LogMessage("❌ ERROR: Failed to assign custom backup image: {}".format(e))
+					# Now assign correctly via Plex HTTP request
+					image_data = HTTP.Request(thumb_url, sleep=0.5).content
+					episode.thumbs[thumb_url] = Proxy.Preview(image_data, sort_order=1)
+
+				except Exception as e:
+					LogMessage("❌ ERROR: Failed to assign backup image (2): {}".format(e))
+			
+			else:
+				try:
+					# Remove existing thumbnails explicitly
+					for key in episode.thumbs.keys():
+						del episode.thumbs[key]
+
+					# Assign the custom image
+					if os.path.exists(custom_image_path):
+						with io.open(custom_image_path, "rb") as img_file:
+							episode.thumbs[custom_image_path] = Proxy.Media(img_file.read())
+						"""LogMessage("🖼️ Successfully applied custom backup image.")"""
+					"""
+					else:
+						LogMessage("❌ ERROR: Custom image file not found: {}".format(custom_image_path))"""
+
+				except Exception as e:
+					LogMessage("❌ ERROR: Failed to assign custom backup image: {}".format(e))
 
 		"""LogMessage("✅ Successfully updated metadata for: {} - S{}E{}".format(eventtitle, season_number, episode_number))"""
 		# endregion
@@ -756,7 +801,7 @@ class SportsDBAgent(Agent.TV_Shows):
 						episode.thumbs[thumb_url] = Proxy.Preview(image_data, sort_order=1)
 
 					except Exception as e:
-						LogMessage("❌ ERROR: Failed to assign backup image: {}".format(e))
+						LogMessage("❌ ERROR: Failed to assign backup image (1): {}".format(e))
 
 					continue  # Skip this episode because no event ID
 
