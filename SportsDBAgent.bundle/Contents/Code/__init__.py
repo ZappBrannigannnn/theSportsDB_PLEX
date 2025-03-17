@@ -26,6 +26,18 @@ if os.name == 'nt':  # Windows
 else:  # Linux/Debian
 	BASE_DIR = "/var/lib/plexmediaserver/Library/Application Support"
 
+PLEX_PLUGIN_DATA_DIR = ""
+PLEX_PLUGIN_DATA_DIR = os.path.join(
+	BASE_DIR,
+	'Plex Media Server',
+	'Plug-in Support',
+	'Data',
+	'com.plexapp.agents.SportsDBAgent',
+	'DataItems'
+)
+if not os.path.exists(PLEX_PLUGIN_DATA_DIR):
+	os.makedirs(PLEX_PLUGIN_DATA_DIR)
+
 # endregion
 
 # region LOGGING 
@@ -63,6 +75,7 @@ def APIKEY_get():
 
 def Start():
 	# Required function for Plex plugins to initialize the agent.
+	LogMessage("\n\n")
 	LogMessage("🔥 START FUNCTION TRIGGERED.")
 
 	APIKEY_get()  # Call APIKEY_get function\
@@ -90,22 +103,10 @@ class SportsDBAgent(Agent.TV_Shows):
 	# endregion
 
 		# region SEARCH STEP 1: Fetch the league ID from the JSON file
-
-		# region GET THE LEAGUE MAP LOCATION
-		plex_plugin_data_dir = os.path.join(
-			BASE_DIR,
-			'Plex Media Server',
-			'Plug-in Support',
-			'Data',
-			'com.plexapp.agents.SportsDBAgent',
-			'DataItems'
-		)
-
-		# Define the path to the JSON file
-		league_map_path = os.path.join(plex_plugin_data_dir, "SportsDB_League_Map.json")
-
-		LogMessage("League map path: {}".format(league_map_path))
 		
+		# region Define the path to the league map JSON file
+		league_map_path = os.path.join(PLEX_PLUGIN_DATA_DIR, "SportsDB_League_Map.json")
+		"""LogMessage("League map path: {}".format(league_map_path))"""
 		# endregion
 
 		# region OPEN THE LEAGUE DATA FILE AND CHECK IF THE LEAGUE EXISTS
@@ -200,7 +201,7 @@ class SportsDBAgent(Agent.TV_Shows):
 
 		fanart_url = league_metadata.get("strFanart1")
 		if fanart_url:
-			LogMessage("✅ Retrieved fanart / background images for league: {}".format(league_id))
+			"""LogMessage("✅ Retrieved fanart / background images for league: {}".format(league_id))"""
 			metadata.art[fanart_url] = Proxy.Preview(HTTP.Request(fanart_url, sleep=0.5).content, sort_order=1)
 
 	# endregion
@@ -231,7 +232,7 @@ class SportsDBAgent(Agent.TV_Shows):
 
 	# region (3) Fetch All Season Posters for league
 	def call_get_season_posters(self, metadata, media, league_id, season_number):
-		LogMessage("🔍 Fetching season posters for League ID: {} | Season: {}".format(league_id, season_number_split))
+		"""LogMessage("🔍 Fetching season posters for League ID: {} | Season: {}".format(league_id, season_number_split))"""
 
 		# Get season posters from API (Returns dictionary {season_number: poster_url})
 		season_posters = get_season_posters(league_id, SPORTSDB_API)
@@ -243,7 +244,7 @@ class SportsDBAgent(Agent.TV_Shows):
 			return season_posters
 
 		# DELETE ### Debugging
-		LogMessage("✅ Found season posters for League ID: {}:\n{}".format(league_id, season_posters))
+		"""LogMessage("✅ Found season posters for League ID: {}:\n{}".format(league_id, season_posters))"""
 
 	# endregion
 
@@ -257,8 +258,7 @@ class SportsDBAgent(Agent.TV_Shows):
 			season_number_split = str(season_number)  # Keep it unchanged for regular seasons
 
 		# Find the correct season poster using the formatted season number
-		#####
-		LogMessage("🔍 season_posters {}...".format(season_posters))
+		"""LogMessage("🔍 season_posters {}...".format(season_posters))"""
 		this_season_poster = season_posters.get(season_number_split)  # Use the proper season number
 
 		if not this_season_poster:
@@ -306,13 +306,6 @@ class SportsDBAgent(Agent.TV_Shows):
 				return custom_image_path
 			else:
 				LogMessage("❌ Failed to download image: {}".format(url))
-				# why?
-				LogMessage("❌ Response code: {}".format(response.status_code))
-				LogMessage("❌ Response content: {}".format(response.content))
-				LogMessage("❌ Response headers: {}".format(response.headers))
-				LogMessage("❌ Response reason: {}".format(response.reason))
-				LogMessage("❌ Response text: {}".format(response.text))
-				LogMessage("❌ Response url: {}".format(response.url))
 				return None
 		except Exception as e:
 			LogMessage("❌ Error downloading image: {}".format(e))
@@ -377,12 +370,61 @@ class SportsDBAgent(Agent.TV_Shows):
 
 	# endregion
 
+	# region (7.1.4) Create and write to thumbnail json file
+	def write_event_thumbnail_json(self, episode_filename):
+		# Define the path to the JSON file
+		thumbnail_json_path = os.path.join(PLEX_PLUGIN_DATA_DIR, "Event_Thumbnail_Map.json")
+
+		# Ensure the file exists
+		if not os.path.exists(thumbnail_json_path):
+			with io.open(thumbnail_json_path, "w", encoding="utf-8") as f:
+				json.dump({}, f, ensure_ascii=False)
+
+		# Load the existing JSON data safely
+		try:
+			with io.open(thumbnail_json_path, "r", encoding="utf-8") as f:
+				try:
+					data = json.load(f)
+				except ValueError:  # Python 2 JSONDecodeError is ValueError
+					data = {}  # If file is empty or corrupted, reset it
+		except IOError:
+			data = {}  # If file does not exist or cannot be read
+
+		# Convert `episode_filename` to Unicode (Python 2 safety)
+		if isinstance(episode_filename, str):
+			episode_filename = unicode(episode_filename, "utf-8")
+
+		# Remove file extension and use as a dictionary key
+		episode_key = os.path.splitext(episode_filename)[0]
+		data[episode_key] = "exists"
+
+		# Convert `json.dumps()` output to Unicode before writing
+		try:
+			with io.open(thumbnail_json_path, "w", encoding="utf-8") as f:
+				json_string = json.dumps(data, ensure_ascii=False, indent=4)
+
+				# **Fix: Convert to Unicode before writing**
+				if isinstance(json_string, str):
+					json_string = unicode(json_string, "utf-8")
+
+				f.write(json_string)  # ✅ Now it's Unicode
+
+			"""LogMessage("✅ Updated JSON file with episode: {}".format(episode_filename))"""
+		except Exception as e:
+			LogMessage("❌ Error updating JSON file: {}".format(str(e)))
+
+	# endregion		
+
 	# region (7.1) Create Custom Event Images
 	def create_episode_thumb(self, episode_filename, event_metadata, metadata, episode_path, custom_image_path):
 
 		# region Collect team Images to use for custom event thumb
 		home_team_name = event_metadata.get('strHomeTeam')
 		away_team_name = event_metadata.get('strAwayTeam')
+
+		# ignore trailing spaces
+		home_team_name = home_team_name.strip()
+		away_team_name = away_team_name.strip()
 
 		# Get team images from metadata roles by looking for team names
 		home_team_thumb = None
@@ -399,6 +441,7 @@ class SportsDBAgent(Agent.TV_Shows):
 			if role_name and away_team_name in role_name:
 				away_team_thumb = role_photo
 				"""LogMessage("✅ Found away team image: {}".format(away_team_thumb, custom_image_path))"""
+			
 		# endregion
 
 		# region Download Badges
@@ -491,13 +534,14 @@ class SportsDBAgent(Agent.TV_Shows):
 
 			"""LogMessage("✅ Match image saved to: {}".format(custom_image_path))"""
 
+			## (7.1.4) Create and add to thumbnail json (used to determine when to delete custom thumbnails)
+			self.write_event_thumbnail_json(episode_filename)
+
 		except Exception as e:
 			LogMessage("❌ Error creating episode thumbnail: {}".format(e))
 			return None
 
 			# endregion
-
-		# endregion
 
 	# endregion
 
@@ -596,9 +640,104 @@ class SportsDBAgent(Agent.TV_Shows):
 		
 	# endregion
 
+	# region (8) Clean up custom event images
+	def cleanup_custom_event_images(self, media):
+		"""LogMessage("🧹 Running cleanup for custom event images...")"""
+
+		# region get the json file and check it
+		# Define the path to the JSON file
+		thumbnail_json_path = os.path.join(PLEX_PLUGIN_DATA_DIR, "Event_Thumbnail_Map.json")
+
+		# Check if the JSON file exists
+		if not os.path.exists(thumbnail_json_path):
+			LogMessage("⚠️ No event thumbnail JSON file found. Skipping cleanup.")
+			return  # No cleanup needed
+		# endregion
+
+		# region Get list of saved image names
+		# Load the JSON data as event_thumbnail_map
+		try:
+			with io.open(thumbnail_json_path, "r", encoding="utf-8") as f:
+				try:
+					event_thumbnail_map = json.load(f)
+				except ValueError as e:
+					LogMessage("❌ Invalid JSON format. Resetting file.")
+					event_thumbnail_map = {}  # Reset the dictionary
+		except IOError as e:
+			LogMessage("❌ Error reading JSON file: {}".format(str(e)))
+			return
+		
+		# Save the list of recorded episode filenames (from JSON) to saved_images
+		saved_images = set(event_thumbnail_map.keys())
+		# endregion
+
+		# region Get list of all current episode filenames currently in the Plex library as all_episodes
+		all_episodes = set()
+
+		# Loop through all seasons and episodes
+		for season in media.seasons.values():
+			for episode in season.episodes.values():
+				if episode.items and episode.items[0].parts:
+					episode_filename = os.path.splitext(os.path.basename(episode.items[0].parts[0].file))[0]
+					all_episodes.add(episode_filename)
+		# endregion
+
+		# region Figure what images to delete and where they are
+		images_to_delete = saved_images - all_episodes
+
+		# Define the directory where images are stored
+		event_images_dir = os.path.join(
+			BASE_DIR,
+			'Plex Media Server',
+			'Plug-in Support',
+			'Data',
+			'com.plexapp.agents.sportsdbagent',
+			'EventImages'
+		)
+		# endregion
+
+		# region Delete images that are no longer needed
+		for filename in images_to_delete:
+			image_path = os.path.join(event_images_dir, filename + ".png")
+
+			if os.path.exists(image_path):
+				try:
+					os.remove(image_path)
+					"""LogMessage("🗑️ Deleted unused custom event image: {}".format(image_path))"""
+				except Exception as e:
+					LogMessage("❌ Error deleting image {}: {}".format(image_path, str(e)))
+			else:
+				LogMessage("⚠️ Image file not found, skipping: {}".format(image_path))
+
+			# Remove entry from JSON file
+			del event_thumbnail_map[filename]
+		# endregion
+
+		# region Save the updated JSON file
+		try:
+			with io.open(thumbnail_json_path, "w", encoding="utf-8") as f:
+				json_string = json.dumps(event_thumbnail_map, ensure_ascii=False, indent=4)
+
+				# Ensure the JSON string is Unicode before writing
+				if isinstance(json_string, str):
+					json_string = unicode(json_string, 'utf-8')
+
+				# Write the JSON string to the file
+				f.write(json_string)
+
+			"""LogMessage("✅ Updated JSON file after cleanup.")"""
+		except Exception as e:
+			LogMessage("❌ Error updating JSON file: {}".format(str(e)))
+		# endregion
+		
+		"""LogMessage("🧹 Cleanup complete!")"""
+
+	# endregion
+
 	# region UPDATE FUNCTION
 
 	def update(self, metadata, media, lang, force):
+		LogMessage("\n\n")
 		LogMessage("🔥 UPDATE FUNCTION TRIGGERED for League ID: {}".format(metadata.id))
 
 		# region UPDATE STEPS (1) & (2) FILL IN LEAGUE/SHOW METADATA (fanart & team images)
@@ -632,7 +771,7 @@ class SportsDBAgent(Agent.TV_Shows):
 
 			# Check if the season poster already exists
 			if not metadata.seasons[season_number].posters:
-				LogMessage("🖼️ Season {} is missing a poster. Fetching from season data grabbed already...".format(season_number))
+				"""LogMessage("🖼️ Season {} is missing a poster. Fetching from season data grabbed already...".format(season_number))"""
 				self.apply_season_poster(metadata, media, league_id, season_number, season_posters)
 			"""
 			else:
@@ -644,14 +783,21 @@ class SportsDBAgent(Agent.TV_Shows):
 			for episode_number in media.seasons[season_number].episodes:
 				episode = metadata.seasons[season_number].episodes[episode_number]
 				episode_media = media.seasons[season_number].episodes[episode_number]
-
+					
 				# Ensure episode media exists before accessing file path
 				if not episode_media.items or not episode_media.items[0].parts:
 					LogMessage("❌ ERROR: Missing media parts for S{}E{}, skipping.".format(season_number, episode_number))
 					continue
 
+				# Determine if individual scan (likely a refresh metadata)
+				refresh_metadata = False
+				number_of_episodes = len(media.seasons[season_number].episodes)
+				if number_of_episodes == 1:
+					if episode.thumbs:
+						refresh_metadata = True
+
 				# Check if episode has already been processed based on thumbs
-				if episode.thumbs:
+				if episode.thumbs and not refresh_metadata:
 					LogMessage("✅ Skipping existing episode S{}E{} (Thumbnail exists)".format(season_number, episode_number))
 					continue
 
@@ -705,6 +851,9 @@ class SportsDBAgent(Agent.TV_Shows):
 				self.update_episode_metadata(metadata, media, event_metadata, episode, season_number, episode_number, episode_path)
 
 				# endregion
+
+		# STEP (8)🧹 Run cleanup after everything is updated
+		self.cleanup_custom_event_images(media)
 
 		LogMessage("\n")
 		LogMessage("✅ UPDATE FUNCTION COMPLETED SUCCESSFULLY.\n")
