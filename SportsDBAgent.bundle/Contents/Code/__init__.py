@@ -384,14 +384,14 @@ class SportsDBAgent(Agent.TV_Shows):
 		if not home_team_name:
 			LogMessage("❌ Failed to find home team name for: {}".format(episode_filename))
 			home_backup = True
-			return home_backup
+			return home_backup # returns as "use_backup_image"
 		else:
 			home_team_name = home_team_name.strip()
 		
 		if not away_team_name:
 			LogMessage("❌ Failed to find away team name for: {}".format(episode_filename))
 			away_backup = True
-			return away_backup
+			return away_backup # returns as "use_backup_image"
 		else:
 			away_team_name = away_team_name.strip()
 
@@ -410,7 +410,7 @@ class SportsDBAgent(Agent.TV_Shows):
 					LogMessage("❌ Failed to find home team image for: {}. Using backup image".format(home_team_name, custom_image_path))
 					# home_backup flag set to true so we know to apply the back up image later
 					home_backup = True
-					return home_backup
+					return home_backup # returns as "use_backup_image"
 
 			if role_name and away_team_name in role_name:
 				away_team_thumb = role_photo
@@ -419,7 +419,7 @@ class SportsDBAgent(Agent.TV_Shows):
 					LogMessage("❌ Failed to find away team image for: {}. Using backup image".format(away_team_name, custom_image_path))
 					# away_backup flag set to true so we know to apply the back up image later
 					away_backup = True
-					return away_backup
+					return away_backup # returns as "use_backup_image"
 			
 		# endregion
 
@@ -544,8 +544,13 @@ class SportsDBAgent(Agent.TV_Shows):
 		my_summary = ("Round {} {}\n{} in {},{}\n{} in attendance\n{}".format(round_num, date, venue, city, country, spectators, summary))
 		# endregion
 
-		# region Assign metadata
-		episode.title = ("Round {} {}".format(round_num, eventtitle))
+		round_in_name = Prefs['RoundsInName']
+
+		if round_num in ("0", "125", "150", "160", "170", "180", "200", "500") or not round_in_name:
+			episode.title = ("{}".format(eventtitle))
+		else:
+			episode.title = ("Round {} {}".format(round_num, eventtitle))
+
 		episode.summary = my_summary
 
 		# Handle date safely
@@ -569,7 +574,7 @@ class SportsDBAgent(Agent.TV_Shows):
 				LogMessage("❌ ERROR: Failed to assign thumb: {}".format(e))
 		# endregion
 		
-		# region If no thumb, create one
+		# region If no thumb, create one OR use the backup image
 		if not thumb:
 			LogMessage("❌ No thumb found for: {} - S{}E{}. Going to create one.".format(eventtitle, season_number, episode_number))
 
@@ -596,8 +601,7 @@ class SportsDBAgent(Agent.TV_Shows):
 			use_backup_image = self.create_episode_thumb(episode_filename,event_metadata, metadata, episode_path, custom_image_path)
 
 			if use_backup_image:
-				#<<
-				LogMessage("🖼️ Using backup image for: {} - S{}E{}".format(eventtitle, season_number, episode_number))
+				"""LogMessage("🖼️ Using backup image for: {} - S{}E{}".format(eventtitle, season_number, episode_number))"""
 				
 				# Apply the backup event image
 				thumb_url = "http://127.0.0.1:32400/:/plugins/com.plexapp.agents.sportsdbagent/resources/event_backup_img.jpg"

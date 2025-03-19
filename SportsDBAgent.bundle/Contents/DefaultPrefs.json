@@ -4,5 +4,11 @@
       "label":   "What is your TheSportsDB API key?",
       "type":    "text",
       "default": "98752398"
+    },
+    {
+      "id":      "RoundsInName",
+      "label":   "Check if you want 'Round #' in the event name.",
+      "type":    "bool",
+      "default": "true"
     }
 ]

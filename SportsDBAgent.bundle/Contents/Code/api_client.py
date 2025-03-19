@@ -290,7 +290,15 @@ def get_events_on_date(formatted_date, league_id, SPORTSDB_API):
 
 	try:
 		response = urllib2.urlopen(events_on_date_url, timeout=10)
-		event_date_round_data = json.load(response)
+		content = response.read().strip()  # Read and strip any whitespace/newlines
+		if not content:  # If the response is empty, return None
+			return None
+
+		try:
+			event_date_round_data = json.loads(content)  # Use json.loads to parse the string
+		except ValueError:  # Catch JSON decoding errors
+			LogMessage("⚠ API Response Error: Invalid JSON received")
+			return None
 
 		if "events" in event_date_round_data and event_date_round_data["events"]:
 			"""LogMessage("✅ Retrieved events on date: {} for: {}".format(formatted_date, league_id))"""
