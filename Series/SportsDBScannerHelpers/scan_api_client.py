@@ -373,8 +373,10 @@ def remove_stop_phrases(words, league_name): # Remove multi-word stop phrases fr
 			("vs",),           # Single-word stop phrase
 			("and",),       
 			("the",),
-			("fc",)				# Can also be adjacent groups of words. For example: ("formula", "1"),
+			("fc",),           # Can also be adjacent groups of words. For example: ("formula", "1"),
+			("highlights",)
 		]
+
 
 	# Add league name stop phrases (league names with numbers can mess up matching)
 	stop_phrases.extend(league_stop_phrase)
@@ -445,6 +447,14 @@ def find_matching_event(league_name, filename, event_date_round_data):
 	for event in event_date_round_data:
 		event_name = event.get("strEvent", "")
 		event_id = event.get("idEvent", "Unknown ID")
+
+		#<<
+		home_team = event.get("strHomeTeam", "")
+		away_team = event.get("strAwayTeam", "")
+		LogMessage("event_name: {}".format(event_name))
+		LogMessage("home_team: {}".format(home_team))
+		LogMessage("away_team: {}".format(away_team))
+		#>>
 
 		event_text = "{} {} {}".format(event_name, event.get("strHomeTeam", ""), event.get("strAwayTeam", ""))
 		event_words = clean_text(event_text)

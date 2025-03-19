@@ -363,10 +363,11 @@ def remove_stop_phrases(words, league_name): # Remove multi-word stop phrases fr
 
 	# Combinations of adjacent words or single words to be removed from matching
 	stop_phrases = [
-			("vs",),           # Single-word stop phrase
+			("vs",),          	# Single-word stop phrase
 			("and",),       
 			("the",),
-			("fc",)				# Can also be adjacent groups of words. For example: ("formula", "1"),
+			("fc",),			# Can also be adjacent groups of words. For example: ("formula", "1"),
+			("highlights",)
 		]
 
 	# Add league name stop phrases (league names with numbers can mess up matching)
