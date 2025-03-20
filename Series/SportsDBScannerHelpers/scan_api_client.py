@@ -478,11 +478,11 @@ def find_matching_event(league_name, filename, event_date_round_data):
 		extra_words = len(event_words) - len(common_words)
 
 		# region NEVER DELETE THESE LOGS (JUST COMMENT THEM OUT IF NEEDED!!!!)
-		LogMessage("Event ID: {}".format(event_id))
-		LogMessage("Filename words: {}".format(filename_words))
-		LogMessage("🆚 Event words: {}".format(event_words))
-		LogMessage("  Common words: {}".format(common_words))
-		LogMessage("➡ Match Score: {}".format(match_score))
+		LogMessage(u"Event ID: {}".format(event_id))
+		LogMessage(u"Filename words: {}".format(filename_words))
+		LogMessage(u"🆚 Event words: {}".format(event_words))
+		LogMessage(u"  Common words: {}".format(common_words))
+		LogMessage(u"➡ Match Score: {}".format(match_score))
 		LogMessage(u"Event Name: {}\n".format(event_name))
 		# endregion NEVER DELETE THESE LOGS (JUST COMMENT THEM OUT IF NEEDED!!!!)
 
@@ -505,11 +505,11 @@ def find_matching_event(league_name, filename, event_date_round_data):
 			event_id = event.get("idEvent", "Unknown ID")
 			event_name = event.get("strEvent", "")
 
-			LogMessage("Event ID: {}".format(event_id))
-			LogMessage("Filename words: {}".format(filename_words))
-			LogMessage("🆚 Event words: {}".format(clean_text("{} {} {}".format(event_name, event.get('strHomeTeam', ''), event.get('strAwayTeam', '')))))
-			LogMessage("  Common words: {}".format(match["common_words"]))
-			LogMessage("  Extra Words: {}".format(match["extra_words"]))
+			LogMessage(u"Event ID: {}".format(event_id))
+			LogMessage(u"Filename words: {}".format(filename_words))
+			LogMessage(u"🆚 Event words: {}".format(clean_text("{} {} {}".format(event_name, event.get('strHomeTeam', ''), event.get('strAwayTeam', '')))))
+			LogMessage(u"  Common words: {}".format(match["common_words"]))
+			LogMessage(u"  Extra Words: {}".format(match["extra_words"]))
 			LogMessage("\n")
 
 		# Pick the event with the fewest extra words
@@ -551,12 +551,12 @@ def find_matching_event(league_name, filename, event_date_round_data):
 			extra_words = len(event_words) - len(common_words)
 
 			# Log updated match score
-			LogMessage("Event ID: {}".format(event.get("idEvent")))
-			LogMessage("Filename words: {}".format(filename_words))
-			LogMessage("🆚 Updated Event words: {}".format(event_words))
-			LogMessage("  Common words: {}".format(common_words))
-			LogMessage("➡ New Match Score: {}".format(match_score))
-			LogMessage("Event Name: {}\n".format(event.get("strEvent")))
+			LogMessage(u"Event ID: {}".format(event.get("idEvent")))
+			LogMessage(u"Filename words: {}".format(filename_words))
+			LogMessage(u"🆚 Updated Event words: {}".format(event_words))
+			LogMessage(u"  Common words: {}".format(common_words))
+			LogMessage(u"➡ New Match Score: {}".format(match_score))
+			LogMessage(u"Event Name: {}\n".format(event.get("strEvent")))
 
 			updated_matches.append({"event": event, "extra_words": extra_words, "score": match_score})
 
@@ -574,10 +574,10 @@ def find_matching_event(league_name, filename, event_date_round_data):
 		event_title = best_match.get("strEvent")
 		event_date = best_match.get("dateEvent")
 
-		LogMessage("✅ Matched filename: {}".format(filename))
-		LogMessage("✅ With event {}".format(event_title))
-		LogMessage("✅ Event_id: {}".format(event_id))
-		LogMessage("✅ Match score: {}".format(best_score))
+		LogMessage(u"✅ Matched filename: {}".format(filename))
+		LogMessage(u"✅ With event {}".format(event_title))
+		LogMessage(u"✅ Event_id: {}".format(event_id))
+		LogMessage(u"✅ Match score: {}".format(best_score))
 
 		return event_id, event_title, event_date
 
