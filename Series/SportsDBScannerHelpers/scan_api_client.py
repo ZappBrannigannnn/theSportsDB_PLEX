@@ -574,9 +574,9 @@ def find_matching_event(league_name, filename, event_date_round_data):
 		event_title = best_match.get("strEvent")
 		event_date = best_match.get("dateEvent")
 
-		LogMessage(u"✅ Matched filename: {}".format(filename))
-		LogMessage(u"✅ With event {}".format(event_title))
-		LogMessage(u"✅ Event_id: {}".format(event_id))
+		LogMessage(u"✅ Matched filename: {}".format(ensure_unicode(filename)))
+		LogMessage(u"✅ With event {}".format(ensure_unicode(event_title)))
+		LogMessage(u"✅ Event_id: {}".format(ensure_unicode(event_id)))
 		LogMessage(u"✅ Match score: {}".format(best_score))
 
 		return event_id, event_title, event_date
