@@ -61,8 +61,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 		league_name = path_parts[-2]  # LEAGUE = Show Name
 		season_name = path_parts[-1]  # SEASON Folder (e.g., "2023", "2021-2022")
 		#<<
-		LogMessage("►► League: {}".format(league_name))
-		LogMessage("►► Season: {}".format(season_name))
+		LogMessage(u"►► League: {}".format(league_name))
+		LogMessage(u"►► Season: {}".format(season_name))
 
 	except Exception as e:
 		LogMessage("►► ERROR: Getting the league and season folder words (something weird happened): {}".format(str(e)))
@@ -164,9 +164,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 		# endregion
 
 		# region Get the event ID from the API_CLIENT
-		LogMessage("►► Processing Filename: {}".format(filename))
-		LogMessage("►► Processing League: {}".format(league_id))
-		LogMessage("►► Season: {}\n".format(season_name))
+		LogMessage(u"►► Processing Filename: {}".format(filename))
+		LogMessage(u"►► Processing League: {}".format(league_id))
+		LogMessage(u"►► Season: {}\n".format(season_name))
 
 		event_id, event_title, event_date, order_number = get_event_id(league_name, league_id, season_name, filename, SPORTSDB_API)
 		# endregion
@@ -194,13 +194,13 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 		
 		season_number = season_name.replace("-", "")  # remove the "-"
 
-		LogMessage("►► LEAGUE / SHOW NAME: {}".format(league_name))
-		LogMessage("►► LEAGUE ID {}".format(league_id))
-		LogMessage("►► SEASON: {}".format(season_number))
-		LogMessage("►► EVENT TITLE: {}".format(event_title))
-		LogMessage("►► EVENT ID: {}".format(event_id))
-		LogMessage("►► EVENT DATE & ORDER #: {}".format(event_date))
-		LogMessage("►► EVENT YEAR: {}".format(event_year))
+		LogMessage(u"►► LEAGUE / SHOW NAME: {}".format(league_name))
+		LogMessage(u"►► LEAGUE ID {}".format(league_id))
+		LogMessage(u"►► SEASON: {}".format(season_number))
+		LogMessage(u"►► EVENT TITLE: {}".format(event_title))
+		LogMessage(u"►► EVENT ID: {}".format(event_id))
+		LogMessage(u"►► EVENT DATE & ORDER #: {}".format(event_date))
+		LogMessage(u"►► EVENT YEAR: {}".format(event_year))
 
 		# endregion
 
