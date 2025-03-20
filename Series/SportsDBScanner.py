@@ -164,8 +164,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 		# endregion
 
 		# region Get the event ID from the API_CLIENT
-		LogMessage(u"►► Processing Filename: {}".format(filename))
-		LogMessage(u"►► Processing League: {}".format(league_id))
+		LogMessage(u"►► Processing Filename: {}".format(ensure_unicode(filename)))
+		LogMessage(u"►► Processing League: {}".format(ensure_unicode(league_id)))
 		LogMessage(u"►► Season: {}\n".format(season_name))
 
 		event_id, event_title, event_date, order_number = get_event_id(league_name, league_id, season_name, filename, SPORTSDB_API)
