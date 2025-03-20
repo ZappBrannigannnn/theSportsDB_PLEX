@@ -360,6 +360,18 @@ def clean_text(text):
 
 # endregion
 
+# region (4.1) ensure_unicode HELPER FUNCTION
+
+def ensure_unicode(s):
+    if s is None:
+        return u""
+    if isinstance(s, unicode):
+        return s
+    return s.decode('utf-8')
+
+# endregion
+
+
 # region (4.2) remove_stop_phrases from matching HELPER FUNCTION
 def remove_stop_phrases(words, league_name): # Remove multi-word stop phrases from a list of words.
 
@@ -448,15 +460,15 @@ def find_matching_event(league_name, filename, event_date_round_data):
 		event_name = event.get("strEvent", "")
 		event_id = event.get("idEvent", "Unknown ID")
 
-		#<<
-		home_team = event.get("strHomeTeam", "")
-		away_team = event.get("strAwayTeam", "")
-		LogMessage("event_name: {}".format(event_name))
-		LogMessage("home_team: {}".format(home_team))
-		LogMessage("away_team: {}".format(away_team))
-		#>>
 
-		event_text = "{} {} {}".format(event_name, event.get("strHomeTeam", ""), event.get("strAwayTeam", ""))
+		event_text = u"{} {} {}".format(
+			event_name,
+			ensure_unicode(event.get("strHomeTeam") or ""),
+			ensure_unicode(event.get("strAwayTeam") or "")
+			)
+
+		"""event_text = "{} {} {}".format(event_name, event.get("strHomeTeam", ""), event.get("strAwayTeam", "")) """
+
 		event_words = clean_text(event_text)
 
 		# Compute match score (higher = better match)
@@ -471,7 +483,7 @@ def find_matching_event(league_name, filename, event_date_round_data):
 		LogMessage("🆚 Event words: {}".format(event_words))
 		LogMessage("  Common words: {}".format(common_words))
 		LogMessage("➡ Match Score: {}".format(match_score))
-		LogMessage("Event Name: {}\n".format(event_name))
+		LogMessage(u"Event Name: {}\n".format(event_name))
 		# endregion NEVER DELETE THESE LOGS (JUST COMMENT THEM OUT IF NEEDED!!!!)
 
 		# Update best matches
@@ -515,13 +527,23 @@ def find_matching_event(league_name, filename, event_date_round_data):
 		for match in best_matches:
 			event = match["event"]
 
+
+			event_text = u"{} {} {} {}".format(
+				ensure_unicode(event.get("strEvent", "")),
+				ensure_unicode(event.get("strHomeTeam") or ""),
+				ensure_unicode(event.get("strAwayTeam") or ""),
+				ensure_unicode(event.get("strDescriptionEN", ""))
+)
+
+
+			"""
 			# Ensure all fields are Unicode (Python 2 fix)
 			event_text = u"{} {} {} {}".format(
 				unicode(event.get("strEvent", ""), "utf-8") if isinstance(event.get("strEvent", ""), str) else event.get("strEvent", ""),
 				unicode(event.get("strHomeTeam", ""), "utf-8") if isinstance(event.get("strHomeTeam", ""), str) else event.get("strHomeTeam", ""),
 				unicode(event.get("strAwayTeam", ""), "utf-8") if isinstance(event.get("strAwayTeam", ""), str) else event.get("strAwayTeam", ""),
 				unicode(event.get("strDescriptionEN", ""), "utf-8") if isinstance(event.get("strDescriptionEN", ""), str) else event.get("strDescriptionEN", "")
-			)
+			)"""
 
 			event_words = clean_text(event_text)
 

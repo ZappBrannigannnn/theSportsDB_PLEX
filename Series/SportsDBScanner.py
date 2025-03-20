@@ -59,9 +59,10 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 			return
 
 		league_name = path_parts[-2]  # LEAGUE = Show Name
-		season_name = path_parts[-1]  # SEASON Folder (e.g., "2023", "2021-2022", "Spring 2023")
-		"""LogMessage("►► League: {}".format(league_name))"""
-		"""LogMessage("►► Season: {}".format(season_name))"""
+		season_name = path_parts[-1]  # SEASON Folder (e.g., "2023", "2021-2022")
+		#<<
+		LogMessage("►► League: {}".format(league_name))
+		LogMessage("►► Season: {}".format(season_name))
 
 	except Exception as e:
 		LogMessage("►► ERROR: Getting the league and season folder words (something weird happened): {}".format(str(e)))
@@ -156,7 +157,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 	for file in files:
 		filename = os.path.basename(file)  # Extracts the actual file name, e.g., "episodeXYZ123.mp4"
 
-		# Ignore files that start with
+		# Ignore files that end with
 		if not filename.endswith((".mp4", ".avi", ".mov", ".wmv", ".flv", ".mkv", ".mpeg", ".3gp", ".webm", ".m4v")):
 			LogMessage("►► Skipping non-videofile: {}".format(filename))
 			continue
