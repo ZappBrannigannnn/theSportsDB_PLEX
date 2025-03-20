@@ -51,6 +51,17 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 	LogMessage("►► STARTING SCAN")
 # endregion
 
+	# region ensure_unicode HELPER FUNCTION
+
+	def ensure_unicode(s):
+		if s is None:
+			return u""
+		if isinstance(s, unicode):
+			return s
+		return s.decode('utf-8')
+
+	# endregion
+
 	# region GET LEAGUE AND SEASON NAMES FROM FOLDERS
 	try:
 		# Ensure we have enough folder depth (needs at least: /SPORTS/LEAGUE/SEASON/)
@@ -61,8 +72,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 		league_name = path_parts[-2]  # LEAGUE = Show Name
 		season_name = path_parts[-1]  # SEASON Folder (e.g., "2023", "2021-2022")
 		#<<
-		LogMessage(u"►► League: {}".format(league_name))
-		LogMessage(u"►► Season: {}".format(season_name))
+		LogMessage(u"►► League: {}".format(ensure_unicode(league_name)))
+		LogMessage(u"►► Season: {}".format(ensure_unicode(season_name)))
 
 	except Exception as e:
 		LogMessage("►► ERROR: Getting the league and season folder words (something weird happened): {}".format(str(e)))
