@@ -1,14 +1,20 @@
 [
-    {
-      "id":      "theSportsDBAPIKey",
-      "label":   "What is your TheSportsDB API key?",
-      "type":    "text",
-      "default": "98752398"
-    },
-    {
-      "id":      "RoundsInName",
-      "label":   "Check if you want 'Round #' in the event name.",
-      "type":    "bool",
-      "default": "true"
-    }
+  {
+    "id": "theSportsDBAPIKey",
+    "label": "What is your TheSportsDB API key?",
+    "type": "text",
+    "default": "98752398"
+  },
+  {
+    "id": "RoundsInName",
+    "label": "Do you want 'Round #' in the event name.",
+    "type": "bool",
+    "default": "true"
+  },
+  {
+    "id": "CustomAndFallbackImages",
+    "label": "Create 'Custom Event Images' and or use 'Fallback Event Images' when missing?",
+    "type": "bool",
+    "default": "true"
+  }
 ]

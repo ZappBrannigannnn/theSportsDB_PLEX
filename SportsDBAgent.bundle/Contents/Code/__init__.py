@@ -574,6 +574,13 @@ class SportsDBAgent(Agent.TV_Shows):
 				LogMessage("❌ ERROR: Failed to assign thumb: {}".format(e))
 		# endregion
 		
+		# region If there's no event thumb for this episode and the user doesn't want to use fallback images, skip it
+		custom_and_fallback_or_not = Prefs['CustomAndFallbackImages']
+		if not thumb and not custom_and_fallback_or_not:
+			LogMessage("⚠️ No event thumb found and user has chosen not to create a custom image or use the fallback image. Skipping.")
+			return
+		# endregion
+		
 		# region If no thumb, create one OR use the backup image
 		if not thumb:
 			LogMessage("❌ No thumb found for: {} - S{}E{}. Going to create one.".format(eventtitle, season_number, episode_number))
@@ -787,6 +794,13 @@ class SportsDBAgent(Agent.TV_Shows):
 				# region STEP (5) GET THE EVENT ID
 
 				event_id = self.call_get_event_id(season_number, episode_number, episode_path, league_id)
+
+				# region If no event ID is found for this episode and user has chosen not to use the fallback image, skip it
+				custom_and_fallback_or_not = Prefs['CustomAndFallbackImages']
+				if not event_id and not custom_and_fallback_or_not:
+					LogMessage("⚠️ No event ID found for S{}E{}, and user has chosen not to use the fallback image. Skipping.".format(season_number, episode_number))
+					continue
+				# endregion
 
 				# If no event ID is found
 				if not event_id:
