@@ -405,21 +405,31 @@ class SportsDBAgent(Agent.TV_Shows):
 
 			if role_name and home_team_name in role_name:
 				home_team_thumb = role_photo
-				"""LogMessage("✅ Found home team image: {}".format(home_team_thumb, custom_image_path))"""
-				if not home_team_thumb:
-					LogMessage("❌ Failed to find home team image for: {}. Using backup image".format(home_team_name, custom_image_path))
+				if home_team_thumb:
+					"""LogMessage("✅ Found home team image: {}".format(home_team_thumb))"""
+				else:
+					LogMessage("❌ Failed to find home team image for: {}. Using backup image".format(home_team_name))
 					# home_backup flag set to true so we know to apply the back up image later
 					home_backup = True
 					return home_backup # returns as "use_backup_image"
+			else:
+				LogMessage("❌ Failed to find home team name in current roles. {}. Using backup image".format(home_team_name))
+				home_backup = True
+				return home_backup # returns as "use_backup_image"
 
 			if role_name and away_team_name in role_name:
 				away_team_thumb = role_photo
-				"""LogMessage("✅ Found away team image: {}".format(away_team_thumb, custom_image_path))"""
-				if not away_team_thumb:
-					LogMessage("❌ Failed to find away team image for: {}. Using backup image".format(away_team_name, custom_image_path))
+				if away_team_thumb:
+					"""LogMessage("✅ Found away team image: {}".format(away_team_thumb))"""
+				else:
+					LogMessage("❌ Failed to find away team image for: {}. Using backup image".format(away_team_name))
 					# away_backup flag set to true so we know to apply the back up image later
 					away_backup = True
 					return away_backup # returns as "use_backup_image"
+			else:
+				LogMessage("❌ Failed to find away team name in current roles. {}. Using backup image".format(away_team_name))
+				away_backup = True
+				return away_backup # returns as "use_backup_image"
 			
 		# endregion
 
@@ -530,7 +540,10 @@ class SportsDBAgent(Agent.TV_Shows):
 		date = event_metadata.get('dateEvent', '') or ''
 		time = event_metadata.get('strTime', '') or ''
 
-		round_num = str(event_metadata.get('intRound', 'Unknown'))
+		round_num = str(event_metadata.get('intRound', ''))
+		if round_num == "None":
+			round_num = "0"
+
 		spectators = str(event_metadata.get('intSpectators')) if event_metadata.get('intSpectators') is not None else "Unknown number of spectators"
 
 		venue = event_metadata.get('strVenue', 'Unknown Venue') or 'Unknown Venue'
@@ -583,7 +596,7 @@ class SportsDBAgent(Agent.TV_Shows):
 		
 		# region If no thumb, create one OR use the backup image
 		if not thumb:
-			LogMessage("❌ No thumb found for: {} - S{}E{}. Going to create one.".format(eventtitle, season_number, episode_number))
+			LogMessage("❌ No thumb found for: {} - S{}E{}. Trying to create one.".format(eventtitle, season_number, episode_number))
 
 			# Get the filename from episode_path without the extension
 			episode_filename = os.path.splitext(os.path.basename(episode_path))[0]
@@ -605,7 +618,7 @@ class SportsDBAgent(Agent.TV_Shows):
 			# endregion
 
 			# Call the create_episide_thumb function and determine whether the backup_image should be used
-			use_backup_image = self.create_episode_thumb(episode_filename,event_metadata, metadata, episode_path, custom_image_path)
+			use_backup_image = self.create_episode_thumb(episode_filename, event_metadata, metadata, episode_path, custom_image_path)
 
 			if use_backup_image:
 				"""LogMessage("🖼️ Using backup image for: {} - S{}E{}".format(eventtitle, season_number, episode_number))"""
