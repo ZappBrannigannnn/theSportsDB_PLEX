@@ -542,7 +542,10 @@ class SportsDBAgent(Agent.TV_Shows):
 
 		round_num = str(event_metadata.get('intRound', ''))
 		if round_num == "None":
-			round_num = "0"
+			round_num = "Unknown"
+
+		#<
+		LogMessage("Round!!!!!!!!!!!!: {}".format(round_num))
 
 		spectators = str(event_metadata.get('intSpectators')) if event_metadata.get('intSpectators') is not None else "Unknown number of spectators"
 
@@ -559,7 +562,7 @@ class SportsDBAgent(Agent.TV_Shows):
 
 		round_in_name = Prefs['RoundsInName']
 
-		if round_num in ("0", "125", "150", "160", "170", "180", "200", "500") or not round_in_name:
+		if round_num == "Unknown" or round_num in ("0", "125", "150", "160", "170", "180", "200", "500") or not round_in_name:
 			episode.title = ("{}".format(eventtitle))
 		else:
 			episode.title = ("Round {} {}".format(round_num, eventtitle))
