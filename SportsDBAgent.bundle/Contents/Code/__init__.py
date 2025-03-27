@@ -439,7 +439,7 @@ class SportsDBAgent(Agent.TV_Shows):
 			'Plex Media Server',
 			'Plug-in Support',
 			'Data',
-			'com.plexapp.agents.sportsdbagent',
+			'com.plexapp.agents.SportsDBagent',
 			'EventImages',
 			'temp'
 		)
@@ -610,7 +610,7 @@ class SportsDBAgent(Agent.TV_Shows):
 				'Plex Media Server',
 				'Plug-in Support',
 				'Data',
-				'com.plexapp.agents.sportsdbagent',
+				'com.plexapp.agents.SportsDBagent',
 				'EventImages',
 			)
 			if not os.path.exists(output_dir):
@@ -627,7 +627,7 @@ class SportsDBAgent(Agent.TV_Shows):
 				"""LogMessage("🖼️ Using backup image for: {} - S{}E{}".format(eventtitle, season_number, episode_number))"""
 				
 				# Apply the backup event image
-				thumb_url = "http://127.0.0.1:32400/:/plugins/com.plexapp.agents.sportsdbagent/resources/event_backup_img.jpg"
+				thumb_url = "http://127.0.0.1:32400/:/plugins/com.plexapp.agents.SportsDBagent/resources/event_backup_img.jpg"
 
 				try:
 					# Remove existing thumbnails explicitly
@@ -676,7 +676,7 @@ class SportsDBAgent(Agent.TV_Shows):
 			'Plex Media Server',
 			'Plug-in Support',
 			'Data',
-			'com.plexapp.agents.sportsdbagent',
+			'com.plexapp.agents.SportsDBagent',
 			'EventImages'
 		)
 		if not os.path.exists(EventImages_folder):
@@ -726,7 +726,7 @@ class SportsDBAgent(Agent.TV_Shows):
 				except Exception as e:
 					LogMessage("❌ Error deleting image {}: {}".format(image_path, str(e)))
 			else:
-				LogMessage("⚠️ Image file not found, skipping: {}".format(image_path))
+				LogMessage("⚠️ Cached image do delete not found, skipping: {}".format(image_path))
 
 		# endregion
 
@@ -823,7 +823,7 @@ class SportsDBAgent(Agent.TV_Shows):
 					LogMessage("❌ ERROR: No event ID found for S{}E{}, applying backup image and skipping.".format(season_number, episode_number))
 
 					# Apply the backup event image
-					thumb_url = "http://127.0.0.1:32400/:/plugins/com.plexapp.agents.sportsdbagent/resources/event_backup_img.jpg"
+					thumb_url = "http://127.0.0.1:32400/:/plugins/com.plexapp.agents.SportsDBagent/resources/event_backup_img.jpg"
 
 					try:
 						# Remove existing thumbnails explicitly
