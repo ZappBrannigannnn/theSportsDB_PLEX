@@ -25,7 +25,7 @@ SPORTSDB_API = ""
 
 
 
-
+"""
 PLEX_PLUGIN_DATA_DIR = ""
 PLEX_PLUGIN_DATA_DIR = os.path.join(
 	BASE_DIR,
@@ -37,6 +37,8 @@ PLEX_PLUGIN_DATA_DIR = os.path.join(
 )
 if not os.path.exists(PLEX_PLUGIN_DATA_DIR):
 	os.makedirs(PLEX_PLUGIN_DATA_DIR)
+"""
+
 
 # endregion
 
