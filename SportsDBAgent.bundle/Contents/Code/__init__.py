@@ -21,18 +21,7 @@ API_BASE_URL = "https://www.thesportsdb.com/api/v1/json/"
 SPORTSDB_API = ""
 
 
-BASE_DIR = ""
-if sys.platform.startswith('win'):
-	BASE_DIR = os.getenv('LOCALAPPDATA')
 
-elif sys.platform.startswith('darwin'):  # macOS
-	BASE_DIR = os.path.expanduser('~/Library/Application Support')
-
-elif sys.platform.startswith('linux'):
-	BASE_DIR = "/var/lib/plexmediaserver/Library/Application Support"
-
-else:
-	raise RuntimeError("Unsupported platform: {}".format(sys.platform))
 
 
 
@@ -63,6 +52,33 @@ def LogMessage(dbgline):
 		print("⚠ Log object is not available. Running in a non-Plex environment.")
 
 # endregion
+
+###################
+BASE_DIR = ""
+if sys.platform.startswith('win'):
+	LogMessage("Running on Windowsssssssssssssssssssss {}".format(sys.platform))
+	BASE_DIR = os.getenv('LOCALAPPDATA')
+
+elif sys.platform.startswith('darwin'):  # macOS
+	#<
+	LogMessage("Running on macOSSSSSSSSSSSSSSSSSSSSS {}".format(sys.platform))
+	BASE_DIR = os.path.expanduser('~/Library/Application Support')
+	
+
+elif sys.platform.startswith('linux'):
+	LogMessage("Running on linuxxxxxxxxxxxxxxxxxxxxx {}".format(sys.platform))
+	BASE_DIR = "/var/lib/plexmediaserver/Library/Application Support"
+
+else:
+	LogMessage("Unsupported platform: {}".format(sys.platform))
+	raise RuntimeError("Unsupported platform: {}".format(sys.platform))
+################
+
+
+
+
+
+
 
 # region APIKEY_get FUNCTION 
 
