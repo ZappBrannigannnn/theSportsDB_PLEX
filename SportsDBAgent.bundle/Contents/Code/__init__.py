@@ -20,11 +20,22 @@ API_KEY = ""  # API Key will be set at startup
 API_BASE_URL = "https://www.thesportsdb.com/api/v1/json/"
 SPORTSDB_API = ""
 
+
 BASE_DIR = ""
-if os.name == 'nt':  # Windows
+if sys.platform.startswith('win'):
 	BASE_DIR = os.getenv('LOCALAPPDATA')
-else:  # Linux/Debian
+
+elif sys.platform.startswith('darwin'):  # macOS
+	BASE_DIR = os.path.expanduser('~/Library/Application Support')
+
+elif sys.platform.startswith('linux'):
 	BASE_DIR = "/var/lib/plexmediaserver/Library/Application Support"
+
+else:
+	raise RuntimeError("Unsupported platform: {}".format(sys.platform))
+
+
+
 
 PLEX_PLUGIN_DATA_DIR = ""
 PLEX_PLUGIN_DATA_DIR = os.path.join(
