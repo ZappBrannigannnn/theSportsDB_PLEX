@@ -226,19 +226,32 @@ def extract_round_from_filename(filename, league_name):
 	LogMessage("►► No numeric round found in filename: {}".format(filename))
 
 	# If no numeric round was found, check the special cases from JSON
-
-	if os.name == 'nt':  # Windows
+	BASE_DIR = ""
+	if sys.platform.startswith('win'):
 		json_filepath = os.path.join(os.getenv('LOCALAPPDATA'),
 									"Plex Media Server",
-									"Scanners", "Series",
+									"Scanners",
+									"Series",
 									"SpecialRoundsMap.json")
-	else:  # Debian/Linux
-		base_dir = "/var/lib/plexmediaserver/Library/Application Support"
-		json_filepath = os.path.join(base_dir,
-								"Plex Media Server",
-								"Scanners",
-								"Series",
-								"SpecialRoundsMap.json")
+
+	elif sys.platform.startswith('darwin'):  # macOS
+		BASE_DIR = os.path.expanduser('~/Library/Application Support')
+		json_filepath = os.path.join(BASE_DIR,
+									"Plex Media Server",
+									"Scanners",
+									"Series",
+									"SpecialRoundsMap.json")
+
+	elif sys.platform.startswith('linux'):
+		BASE_DIR = "/var/lib/plexmediaserver/Library/Application Support"
+		json_filepath = os.path.join(BASE_DIR,
+									"Plex Media Server",
+									"Scanners",
+									"Series",
+									"SpecialRoundsMap.json")
+
+	else:
+		raise RuntimeError("Unsupported platform: {}".format(sys.platform))
 
 	if not os.path.exists(json_filepath):
 		LogMessage("►► JSON file not found: {}".format(json_filepath))

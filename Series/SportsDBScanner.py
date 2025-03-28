@@ -84,13 +84,29 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
 	# region DEFINE/CREATE THE JSON FILE LOCATION TO WRITE THE LEAGUE MAP TO
 
 	# Get the Plex plugin data directory to write the JSON league map to
-	if os.name == 'nt':  # Windows
-		base_dir = os.getenv('LOCALAPPDATA', os.path.expanduser("~"))
-	else:  # Linux/Debian
-	    base_dir = "/var/lib/plexmediaserver/Library/Application Support"
+	BASE_DIR = ""
+	if sys.platform.startswith('win'):
+		#<
+		LogMessage("**********OPERATING SYSTEM: {}**********".format(sys.platform))
+		BASE_DIR = os.getenv('LOCALAPPDATA')
+
+	elif sys.platform.startswith('darwin'):  # macOS
+		#<
+		LogMessage("**********OPERATING SYSTEM: {}**********".format(sys.platform))
+		BASE_DIR = os.path.expanduser('~/Library/Application Support')
+
+	elif sys.platform.startswith('linux'):
+		#<
+		LogMessage("**********OPERATING SYSTEM: {}**********".format(sys.platform))
+		BASE_DIR = "/var/lib/plexmediaserver/Library/Application Support"
+
+	else:
+		#<
+		LogMessage("**********OPERATING SYSTEM NOT SUPPORTED: {}**********".format(sys.platform))
+		raise RuntimeError("Unsupported platform: {}".format(sys.platform))
 
 	plex_plugin_data_dir = os.path.join(
-		base_dir,
+		BASE_DIR,
 		'Plex Media Server',
 		'Plug-in Support',
 		'Data',

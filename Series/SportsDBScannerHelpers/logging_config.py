@@ -1,29 +1,47 @@
 # logging_config.py
 import os
+import sys
 import logging
 from logging.handlers import RotatingFileHandler
 
 # Set correct base directory
-if os.name == 'nt':  # Windows
-    base_dir = os.getenv('LOCALAPPDATA', os.path.expanduser("~"))
+BASE_DIR = ""
+
+if sys.platform.startswith('win'):  # Windows
+    BASE_DIR = os.getenv('LOCALAPPDATA', os.path.expanduser("~"))
 
     # Define log file location
     log_file = os.path.join(
-        base_dir,
+        BASE_DIR,
         'Plex Media Server',
         'Logs',
         'SportsDBScanner.log'
     )
 
-else:  # Linux/Debian 
-    #base_dir = os.getenv('XDG_CONFIG_HOME', os.path.expanduser("~/.config")) ############################
-    base_dir = "/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Logs"
+elif sys.platform.startswith('darwin'):  # macOS
+    BASE_DIR = os.path.expanduser('~/Library/Application Support')
 
     # Define log file location
     log_file = os.path.join(
-        base_dir,
+        BASE_DIR,
+        'Plex Media Server',
+        'Logs',
         'SportsDBScanner.log'
     )
+
+elif sys.platform.startswith('linux'):  # Linux/Debian 
+    BASE_DIR = "/var/lib/plexmediaserver/Library/Application Support"
+
+    # Define log file location
+    log_file = os.path.join(
+        BASE_DIR,
+        'Plex Media Server',
+        'Logs',
+        'SportsDBScanner.log'
+    )
+
+else:
+    raise RuntimeError("Unsupported platform: {}".format(sys.platform))
 
 # Ensure log directory exists
 log_dir = os.path.dirname(log_file)
