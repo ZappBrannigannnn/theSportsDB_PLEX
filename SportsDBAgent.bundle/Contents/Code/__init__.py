@@ -14,34 +14,6 @@ import png
 
 # endregion
 
-# region GLOBAL VARIABLES 
-
-API_KEY = ""  # API Key will be set at startup
-API_BASE_URL = "https://www.thesportsdb.com/api/v1/json/"
-SPORTSDB_API = ""
-
-
-
-
-
-
-"""
-PLEX_PLUGIN_DATA_DIR = ""
-PLEX_PLUGIN_DATA_DIR = os.path.join(
-	BASE_DIR,
-	'Plex Media Server',
-	'Plug-in Support',
-	'Data',
-	'com.plexapp.agents.SportsDBAgent',
-	'DataItems'
-)
-if not os.path.exists(PLEX_PLUGIN_DATA_DIR):
-	os.makedirs(PLEX_PLUGIN_DATA_DIR)
-"""
-
-
-# endregion
-
 # region LOGGING 
 
 def LogMessage(dbgline):
@@ -55,32 +27,46 @@ def LogMessage(dbgline):
 
 # endregion
 
-###################
+# region GLOBAL VARIABLES 
+
+API_KEY = ""  # API Key will be set at startup
+API_BASE_URL = "https://www.thesportsdb.com/api/v1/json/"
+SPORTSDB_API = ""
+
 BASE_DIR = ""
 if sys.platform.startswith('win'):
-	LogMessage("Running on Windowsssssssssssssssssssss {}".format(sys.platform))
+	#<
+	LogMessage("**********OPERATING SYSTEM: {}**********".format(sys.platform))
 	BASE_DIR = os.getenv('LOCALAPPDATA')
 
 elif sys.platform.startswith('darwin'):  # macOS
 	#<
-	LogMessage("Running on macOSSSSSSSSSSSSSSSSSSSSS {}".format(sys.platform))
+	LogMessage("OPERATING SYSTEM: {}".format(sys.platform))
 	BASE_DIR = os.path.expanduser('~/Library/Application Support')
-	
 
 elif sys.platform.startswith('linux'):
-	LogMessage("Running on linuxxxxxxxxxxxxxxxxxxxxx {}".format(sys.platform))
+	#<
+	LogMessage("OPERATING SYSTEM: {}".format(sys.platform))
 	BASE_DIR = "/var/lib/plexmediaserver/Library/Application Support"
 
 else:
-	LogMessage("Unsupported platform: {}".format(sys.platform))
+	#<
+	LogMessage("OPERATING SYSTEM NOT SUPPORTED: {}".format(sys.platform))
 	raise RuntimeError("Unsupported platform: {}".format(sys.platform))
-################
 
+PLEX_PLUGIN_DATA_DIR = ""
+PLEX_PLUGIN_DATA_DIR = os.path.join(
+	BASE_DIR,
+	'Plex Media Server',
+	'Plug-in Support',
+	'Data',
+	'com.plexapp.agents.SportsDBAgent',
+	'DataItems'
+)
+if not os.path.exists(PLEX_PLUGIN_DATA_DIR):
+	os.makedirs(PLEX_PLUGIN_DATA_DIR)
 
-
-
-
-
+# endregion
 
 # region APIKEY_get FUNCTION 
 
@@ -572,9 +558,6 @@ class SportsDBAgent(Agent.TV_Shows):
 		round_num = str(event_metadata.get('intRound', ''))
 		if round_num == "None":
 			round_num = "Unknown"
-
-		#<
-		LogMessage("Round!!!!!!!!!!!!: {}".format(round_num))
 
 		spectators = str(event_metadata.get('intSpectators')) if event_metadata.get('intSpectators') is not None else "Unknown number of spectators"
 
