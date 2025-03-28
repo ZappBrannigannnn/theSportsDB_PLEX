@@ -35,22 +35,18 @@ SPORTSDB_API = ""
 
 BASE_DIR = ""
 if sys.platform.startswith('win'):
-	#<
 	LogMessage("**********OPERATING SYSTEM: {}**********".format(sys.platform))
 	BASE_DIR = os.getenv('LOCALAPPDATA')
 
 elif sys.platform.startswith('darwin'):  # macOS
-	#<
 	LogMessage("**********OPERATING SYSTEM: {}**********".format(sys.platform))
 	BASE_DIR = os.path.expanduser('~/Library/Application Support')
 
 elif sys.platform.startswith('linux'):
-	#<
 	LogMessage("**********OPERATING SYSTEM: {}**********".format(sys.platform))
 	BASE_DIR = "/var/lib/plexmediaserver/Library/Application Support"
 
 else:
-	#<
 	LogMessage("**********OPERATING SYSTEM NOT SUPPORTED: {}**********".format(sys.platform))
 	raise RuntimeError("Unsupported platform: {}".format(sys.platform))
 

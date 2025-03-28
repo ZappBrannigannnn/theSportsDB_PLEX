@@ -19,13 +19,13 @@ if sys.platform.startswith('win'):  # Windows
     )
 
 elif sys.platform.startswith('darwin'):  # macOS
-    BASE_DIR = os.path.expanduser('~/Library/Application Support')
+    BASE_DIR = os.path.expanduser('~/Library')
 
     # Define log file location
     log_file = os.path.join(
         BASE_DIR,
-        'Plex Media Server',
         'Logs',
+        'Plex Media Server',
         'SportsDBScanner.log'
     )
 

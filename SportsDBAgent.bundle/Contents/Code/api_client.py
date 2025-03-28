@@ -227,6 +227,7 @@ def extract_round_from_filename(filename, league_name):
 
 	# If no numeric round was found, check the special cases from JSON
 	BASE_DIR = ""
+
 	if sys.platform.startswith('win'):
 		json_filepath = os.path.join(os.getenv('LOCALAPPDATA'),
 									"Plex Media Server",
@@ -235,7 +236,7 @@ def extract_round_from_filename(filename, league_name):
 									"SpecialRoundsMap.json")
 
 	elif sys.platform.startswith('darwin'):  # macOS
-		BASE_DIR = os.path.expanduser('~/Library/Application Support')
+		BASE_DIR = os.path.expanduser('~/Library/Application Support/Plex')
 		json_filepath = os.path.join(BASE_DIR,
 									"Plex Media Server",
 									"Scanners",

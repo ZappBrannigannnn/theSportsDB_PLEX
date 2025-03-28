@@ -202,7 +202,7 @@ def extract_round_from_filename(filename, league_name):
 									"SpecialRoundsMap.json")
 	
 	elif sys.platform.startswith("darwin"):  # macOS
-		config_home = os.path.expanduser("~/Library/Application Support")
+		config_home = os.path.expanduser("~/Library/Application Support/Plex")
 		json_filepath = os.path.join(config_home,
 									"Plex Media Server",
 									"Scanners",
