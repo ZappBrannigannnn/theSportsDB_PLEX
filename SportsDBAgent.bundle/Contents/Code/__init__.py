@@ -40,7 +40,7 @@ if sys.platform.startswith('win'):
 
 elif sys.platform.startswith('darwin'):  # macOS
 	LogMessage("**********OPERATING SYSTEM: {}**********".format(sys.platform))
-	BASE_DIR = os.path.expanduser('~/Library/Application Support')
+	BASE_DIR = os.path.expanduser('~/Library/Application Support/Plex')
 
 elif sys.platform.startswith('linux'):
 	LogMessage("**********OPERATING SYSTEM: {}**********".format(sys.platform))
